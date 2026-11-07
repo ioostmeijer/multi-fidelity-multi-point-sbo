@@ -55,12 +55,20 @@ The GitHub Actions workflows are in `.github/workflows/`. The test and docs work
 from `uv.lock` (via the shared `.github/actions/setup-env` action); the Lint workflow installs only the locked `lint`
 group (`uv sync --locked --only-group lint`), without the package or MPI, and runs the hooks with it.
 
-| Workflow       | Runs on                                                                                  | Jobs                                          |
-| -------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `lint.yml`     | All pushes and pull requests to `main` and `dev`, including documentation-only changes   | Pre-commit hooks on all files                 |
-| `ci.yml`       | Pushes and pull requests to `main` and `dev` that touch `src/`, `tests/` or dependencies | deptry, unit tests (Linux and Windows)        |
-| `extended.yml` | Non-draft pull requests to `main` that touch code; manually on any branch                | Verification and E2E tests; coverage (manual) |
-| `docs.yml`     | Pushes to `main` and pull requests                                                       | Builds the docs; deploys them on `main`       |
+| Workflow       | Runs on                                                    | Jobs                                          | Required check          |
+| -------------- | ---------------------------------------------------------- | --------------------------------------------- | ----------------------- |
+| `lint.yml`     | All pushes and pull requests to `main` and `dev`           | Pre-commit hooks on all files                 | `pre-commit`            |
+| `ci.yml`       | All pushes and pull requests to `main` and `dev`           | deptry, unit tests (Linux and Windows)        | `CI passed`             |
+| `extended.yml` | Pull requests and pushes to `main`; manually on any branch | Verification and E2E tests; coverage (manual) | `Extended tests passed` |
+| `docs.yml`     | Pushes to `main` and all pull requests                     | Builds the docs; deploys them on `main`       | `build`                 |
+
+`ci.yml` and `extended.yml` start with a `changes` job (the shared `.github/actions/detect-code-changes` action), which
+checks whether `src/`, `tests/`, `pyproject.toml`, `uv.lock`, the shared actions or the workflow itself changed. If not,
+for example in a documentation-only pull request, the tests are skipped. Each of these workflows ends with a summary job
+(`CI passed`, `Extended tests passed`) that fails if any of its jobs failed or was cancelled, and passes if they passed
+or were skipped. Branch protection on `main` requires only the summary jobs, `pre-commit` and `build`, so a
+documentation-only pull request can be merged within a minute, while a pull request that changes code has to pass every
+test.
 
 The extended tests are slow, so they run on a pull request to `main` only once it is out of draft. Open the pull request
 as a draft while you are still pushing to it, then mark it **Ready for review** to run them; a later push cancels the
