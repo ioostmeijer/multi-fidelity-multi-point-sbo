@@ -65,7 +65,7 @@ def test_verification_ego_mpi() -> None:
             ego_mpi = EgoMPI(config)
 
             # Get initial samples using LHS
-            lhs = LHS(xlimits=config.bounds)
+            lhs = LHS(xlimits=config.bounds, seed=random_seed)
             x_initial = lhs(5 * config.n_dimensions)
             y_initial = function(x_initial)
 
