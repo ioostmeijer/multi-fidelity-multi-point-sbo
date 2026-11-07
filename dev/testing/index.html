@@ -3084,7 +3084,7 @@ selected with <code>-m</code>.</p>
 <tr>
 <td><code>tests/tests_e2e/</code></td>
 <td><code>e2e</code></td>
-<td>Complete optimisations on the Himmelblau function, single- and multi-fidelity.</td>
+<td>Complete optimisations on the cheap 1D Forrester function, single- and multi-fidelity: checks that a full run works, not accuracy.</td>
 <td>Slow</td>
 </tr>
 </tbody>
@@ -3127,7 +3127,7 @@ there:</p>
 </tr>
 <tr>
 <td><code>template_e2e.py</code></td>
-<td><code>template_for_e2e_test(used_algorithms, settings, ...)</code>: runs a full optimisation on Himmelblau and checks the optimum within <code>RESULT_TOLERANCE</code> (<code>1e-3</code>).</td>
+<td><code>template_for_e2e_test(used_algorithms, settings, ...)</code>: runs a full optimisation on Forrester and checks the optimum within <code>RESULT_TOLERANCE</code> (<code>1e-2</code>).</td>
 </tr>
 <tr>
 <td><code>surrogate_plotter.py</code></td>

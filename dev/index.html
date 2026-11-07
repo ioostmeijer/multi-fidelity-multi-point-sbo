@@ -3115,7 +3115,7 @@ group (<code>uv sync --locked --only-group lint</code>), without the package or 
 </tr>
 <tr>
 <td><code>extended.yml</code></td>
-<td>Merges to <code>main</code> that touch code; manually on any branch</td>
+<td>Non-draft pull requests to <code>main</code> that touch code; manually on any branch</td>
 <td>Verification and E2E tests; coverage (manual)</td>
 </tr>
 <tr>
@@ -3125,8 +3125,10 @@ group (<code>uv sync --locked --only-group lint</code>), without the package or 
 </tr>
 </tbody>
 </table>
-<p>To run the extended tests on another branch, open <strong>Actions → Extended tests → Run workflow</strong> and select the branch, or
-run <code>gh workflow run extended.yml --ref &lt;branch&gt;</code>.</p>
+<p>The extended tests are slow, so they run on a pull request to <code>main</code> only once it is out of draft. Open the pull request
+as a draft while you are still pushing to it, then mark it <strong>Ready for review</strong> to run them; a later push cancels the
+run in progress and starts a new one. They aren't run again on the merge commit. To run them on another branch, open
+<strong>Actions → Extended tests → Run workflow</strong> and select the branch, or run <code>gh workflow run extended.yml --ref &lt;branch&gt;</code>.</p>
 <h2 id="dependencies">Dependencies<a class="headerlink" href="#dependencies" title="Permanent link">&para;</a></h2>
 <p>Dependencies are declared in <code>pyproject.toml</code>:</p>
 <ul>
