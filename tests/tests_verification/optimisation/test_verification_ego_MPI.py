@@ -44,7 +44,7 @@ def test_verification_ego_mpi() -> None:
 
         optimum_solution = {"value": float("inf")}
         # Run for several random seeds to overcome possible bad initial state
-        for random_seed in range(25):
+        for random_seed in range(10):
             used_algorithms = {
                 "optimisation": "EgoSequential",
                 "surrogate": "KRG",
