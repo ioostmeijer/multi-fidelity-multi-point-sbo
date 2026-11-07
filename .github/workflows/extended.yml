@@ -51,7 +51,7 @@ jobs:
         run: git config --global core.longpaths true
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up environment
         uses: ./.github/actions/setup-env
@@ -90,7 +90,7 @@ jobs:
         run: git config --global core.longpaths true
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up environment
         uses: ./.github/actions/setup-env
@@ -115,7 +115,7 @@ jobs:
     timeout-minutes: 120
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up environment
         uses: ./.github/actions/setup-env
@@ -148,7 +148,7 @@ jobs:
           python -m coverage report
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-xml
           path: coverage.xml
