@@ -1,0 +1,48 @@
+name: Detect code changes
+description: >
+  Sets `code` to true when the pull request or push changes a file matching `pattern`. Other events (manual runs and
+  schedules) always count as changed. Needs a checkout with full history (`fetch-depth: 0`).
+
+inputs:
+  pattern:
+    description: Extended regular expression (grep -E) matched against the changed file paths
+    required: true
+
+outputs:
+  code:
+    description: "'true' if a matching file changed (or the event isn't a pull request or push), otherwise 'false'"
+    value: ${{ steps.detect.outputs.code }}
+
+runs:
+  using: composite
+  steps:
+    - id: detect
+      shell: bash
+      env:
+        EVENT: ${{ github.event_name }}
+        BEFORE: ${{ github.event.before }}
+        PATTERN: ${{ inputs.pattern }}
+      run: |
+        case "$EVENT" in
+          pull_request)
+            # A pull request is checked out as its test merge commit; the first parent is the base branch.
+            base="HEAD^1" ;;
+          push)
+            base="$BEFORE"
+            if [[ -z "$base" || "$base" =~ ^0+$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+              echo "No previous commit to compare against; treating the code as changed."
+              echo "code=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi ;;
+          *)
+            echo "Event '$EVENT': treating the code as changed."
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            exit 0 ;;
+        esac
+
+        changed=$(git diff --name-only "$base" HEAD)
+        echo "Changed files:"
+        echo "$changed" | sed 's/^/  /'
+        if grep -Eq "$PATTERN" <<< "$changed"; then code=true; else code=false; fi
+        echo "Code changed: $code"
+        echo "code=$code" >> "$GITHUB_OUTPUT"
