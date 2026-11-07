@@ -3100,31 +3100,43 @@ group (<code>uv sync --locked --only-group lint</code>), without the package or 
 <th>Workflow</th>
 <th>Runs on</th>
 <th>Jobs</th>
+<th>Required check</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>lint.yml</code></td>
-<td>All pushes and pull requests to <code>main</code> and <code>dev</code>, including documentation-only changes</td>
+<td>All pushes and pull requests to <code>main</code> and <code>dev</code></td>
 <td>Pre-commit hooks on all files</td>
+<td><code>pre-commit</code></td>
 </tr>
 <tr>
 <td><code>ci.yml</code></td>
-<td>Pushes and pull requests to <code>main</code> and <code>dev</code> that touch <code>src/</code>, <code>tests/</code> or dependencies</td>
+<td>All pushes and pull requests to <code>main</code> and <code>dev</code></td>
 <td>deptry, unit tests (Linux and Windows)</td>
+<td><code>CI passed</code></td>
 </tr>
 <tr>
 <td><code>extended.yml</code></td>
-<td>Non-draft pull requests to <code>main</code> that touch code; manually on any branch</td>
+<td>Pull requests and pushes to <code>main</code>; manually on any branch</td>
 <td>Verification and E2E tests; coverage (manual)</td>
+<td><code>Extended tests passed</code></td>
 </tr>
 <tr>
 <td><code>docs.yml</code></td>
-<td>Pushes to <code>main</code> and pull requests</td>
+<td>Pushes to <code>main</code> and all pull requests</td>
 <td>Builds the docs; deploys them on <code>main</code></td>
+<td><code>build</code></td>
 </tr>
 </tbody>
 </table>
+<p><code>ci.yml</code> and <code>extended.yml</code> start with a <code>changes</code> job (the shared <code>.github/actions/detect-code-changes</code> action), which
+checks whether <code>src/</code>, <code>tests/</code>, <code>pyproject.toml</code>, <code>uv.lock</code>, the shared actions or the workflow itself changed. If not,
+for example in a documentation-only pull request, the tests are skipped. Each of these workflows ends with a summary job
+(<code>CI passed</code>, <code>Extended tests passed</code>) that fails if any of its jobs failed or was cancelled, and passes if they passed
+or were skipped. Branch protection on <code>main</code> requires only the summary jobs, <code>pre-commit</code> and <code>build</code>, so a
+documentation-only pull request can be merged within a minute, while a pull request that changes code has to pass every
+test.</p>
 <p>The extended tests are slow, so they run on a pull request to <code>main</code> only once it is out of draft. Open the pull request
 as a draft while you are still pushing to it, then mark it <strong>Ready for review</strong> to run them; a later push cancels the
 run in progress and starts a new one. They aren't run again on the merge commit. To run them on another branch, open
