@@ -1,0 +1,119 @@
+site_name: "Multi-fidelity Multi-point SBO"
+site_description: "Surrogate-Based Optimisation framework capable of handling multiple fidelities and/or
+multiple points in parallel."
+site_author: "Ids Oostmeijer"
+# GitHub Pages serves the docs at https://<user>.github.io/<repo>/ (also used in README.md, CITATION.cff and
+# [project.urls] in pyproject.toml)
+site_url: "https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/"
+
+repo_name: "ioostmeijer/multi-fidelity-multi-point-sbo"
+repo_url: "https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo"
+edit_uri: "edit/main/docs/"
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - docs/gen_api_pages.py
+        - docs/gen_settings_table.py
+        - docs/gen_constants_table.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - section-index
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: numpy
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+            merge_init_into_class: true
+            filters: ["!^_"]
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - toc:
+      permalink: true
+
+# Mermaid diagrams in the style of the draw.io diagrams in docs/assets. Mermaid is loaded here (instead of by Material)
+# so that javascripts/mermaid_style.js can add the colours to Material's Mermaid configuration.
+extra_css:
+  - stylesheets/extra.css
+extra_javascript:
+  - https://unpkg.com/mermaid@11.4.1/dist/mermaid.min.js
+  - javascripts/mermaid_style.js
+
+nav:
+  - Home: index.md
+  - User Guide:
+    - user/index.md
+    - Getting Started: user/getting_started.md
+    - Defining a Problem: user/configuration.md
+    - Settings and Stopping Criteria: user/settings.md
+    - Multi-fidelity Optimisation: user/multi_fidelity.md
+    - Multi-point Optimisation: user/multi_point.md
+    - Results, Plots and Logs: user/results.md
+    - Running on HPC: user/hpc.md
+    - Troubleshooting: user/troubleshooting.md
+  - Developer Guide:
+    - dev/index.md
+    - Architecture: dev/architecture.md
+    - Extending the Framework:
+      - dev/extending/index.md
+      - Infill Strategy: dev/extending/infill.md
+      - Surrogate Model: dev/extending/surrogate.md
+      - Optimisation Algorithm: dev/extending/optimisation.md
+    - Testing: dev/testing.md
+  - API Reference: api/

@@ -1,0 +1,13 @@
+# Pull requests for new versions of the GitHub Actions used in the workflows (not for the Python
+# packages: uv.lock is kept as used for the thesis results).
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directories:
+      - "/"                          # .github/workflows
+      - "/.github/actions/setup-env"  # the shared setup action
+    schedule:
+      interval: "quarterly"
+    groups:
+      github-actions:                # one pull request for all updates
+        patterns: ["*"]

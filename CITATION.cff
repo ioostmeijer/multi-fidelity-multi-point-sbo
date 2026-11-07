@@ -1,0 +1,48 @@
+# Format: https://citation-file-format.github.io/  Validate with: uvx cffconvert --validate
+cff-version: 1.2.0
+message: "If you use this software, please cite the MSc thesis below (and the software if relevant)."
+type: software
+title: "Multi-fidelity Multi-point SBO"
+abstract: >-
+  A framework for surrogate-based optimisation (SBO) with asynchronous multi-point
+  and/or multi-fidelity infill strategies, developed as part of the MSc thesis
+  "Combining an Asynchronous Multi-Point and a Multi-Fidelity Infill Strategy for
+  Surrogate-Based Optimisation" (Delft University of Technology, 2026).
+authors:
+  - family-names: Oostmeijer
+    given-names: Ids
+    affiliation: "Delft University of Technology"
+version: 1.0.0
+date-released: "2026-11-07"
+license: MIT
+repository-code: "https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo"
+url: "https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/"
+keywords:
+  - surrogate-based optimisation
+  - multi-fidelity
+  - multi-point
+  - asynchronous
+  - efficient global optimisation
+
+# The thesis
+preferred-citation:
+  type: thesis
+  thesis-type: "Master's thesis"
+  title: "Combining an Asynchronous Multi-Point and a Multi-Fidelity Infill Strategy for Surrogate-Based Optimisation: An Empirical Evaluation on Unconstrained Problems"
+  authors:
+    - family-names: Oostmeijer
+      given-names: Ids
+  institution:
+    name: "Delft University of Technology"
+    city: Delft
+    country: NL
+  department: "Faculty of Aerospace Engineering"
+  year: 2026
+  month: 7
+  url: "https://resolver.tudelft.nl/uuid:baf55719-5cc1-42ae-b9f7-55af0f2292d8"
+  repository: "https://repository.tudelft.nl/record/uuid:baf55719-5cc1-42ae-b9f7-55af0f2292d8"
+  keywords:
+    - surrogate-based optimisation
+    - multi-fidelity
+    - asynchronous multi-point
+    - infill strategy

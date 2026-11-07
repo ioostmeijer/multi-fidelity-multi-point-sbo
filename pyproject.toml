@@ -1,0 +1,138 @@
+[project]
+name = "multi-fidelity-multi-point-sbo"
+version = "1.0.0"
+description = "Surrogate-based optimisation (SBO) with asynchronous multi-point and/or multi-fidelity infill strategies"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    {name = "Ids Oostmeijer"}
+]
+keywords = ["surrogate-based optimisation", "multi-fidelity", "multi-point", "asynchronous", "parallel computing"]
+requires-python = "==3.10.*"
+dependencies = [
+    "matplotlib",
+    "numpy",
+    "scipy",
+    "smt",
+    "mpi4py",
+    "setuptools>=69,<81",
+]
+
+[project.optional-dependencies]
+# Benchmark functions (mf2, GPLv3) used by Config.from_json, the examples and the thesis
+# runs. Optional, so the core package has no GPL dependency: pip install "multi-fidelity-multi-point-sbo[benchmarks]"
+benchmarks = ["mf2"]
+
+[dependency-groups]
+# Development-only dependencies (PEP 735). Not installed by `pip install multi-fidelity-multi-point-sbo`.
+# `uv sync` installs the `dev` group, which includes `test` and `docs`.
+
+# Lean test requirements for running the test suite
+test = [
+    "mf2",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist",
+    "pytest-mpi",
+    "mockmpi",
+    "coverage",
+]
+
+# Documentation requirements for building the documentation
+docs = [
+    "mkdocs-material",
+    "mkdocstrings[python]",
+    "mkdocs-gen-files",
+    "mkdocs-literate-nav",
+    "mkdocs-section-index",
+]
+
+# Formatters and linters run by the pre-commit hooks. Their versions are locked only here (in uv.lock):
+# .pre-commit-config.yaml runs these installed tools instead of installing its own copies.
+lint = [
+    "pre-commit",
+    "pre-commit-hooks",
+    "black",
+    "isort",
+    "flake8",
+    "flake8-bugbear",
+    "flake8-builtins",
+    "flake8-comprehensions",
+    "flake8-annotations",
+    "flake8-docstrings",
+    "mdformat",
+    "mdformat-mkdocs",
+    "mdformat-tables",
+]
+
+# Full dev requirements for development, including testing, documentation and linting
+dev = [
+    {include-group = "test"},
+    {include-group = "docs"},
+    {include-group = "lint"},
+    "deptry",
+]
+
+[project.urls]
+Repository = "https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo"
+Documentation = "https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/"
+Changelog = "https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["setuptools>=77,<81", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+skip = ["venv", ".venv", "build", "dist"]
+
+[tool.black]
+line_length = 88
+target_version = ["py310"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = " -ra --strict-markers"
+testpaths = ["tests"]
+pythonpath = ["tests/helpers"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+norecursedirs = ["tests/helpers"]
+markers = [
+    "unit: fast, isolated unit tests",
+    "verification: verification tests, slow",
+    "mpi: marks tests that require MPI (Skipped on windows CI)",
+    "mock_mpi: marks test that require mock mpi (Skipped on windows CI)",
+    "e2e: end-to-end tests that run full workflows",
+]
+
+[tool.coverage.run]
+source_pkgs = ["sbo"]
+branch = true
+parallel = true
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+
+[tool.deptry]
+known_first_party = ["sbo"]
+
+[tool.deptry.per_rule_ignores]
+# mf2 is imported dynamically (importlib) by Config.from_json, so deptry can't see it
+DEP002 = ["setuptools", "mf2"]
+
+[tool.uv]
+# Constrains a transitive dependency without adding it: pymdown-extensions 12 breaks mkdocstrings' highlighter.
+constraint-dependencies = ["pymdown-extensions<12"]

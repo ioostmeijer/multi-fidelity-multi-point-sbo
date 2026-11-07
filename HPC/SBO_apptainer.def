@@ -1,0 +1,73 @@
+Bootstrap: docker
+From: python:3.10-slim
+
+# Build with HPC/build_apptainer.sh, which runs `apptainer build` from the repository root,
+# so the %files source paths below are relative to the repository root.
+#
+# The image only contains the locked runtime dependencies (from uv.lock). The SBO source code is
+# not copied in: bind-mount the repository at /app when running (see HPC section in the README).
+
+%files
+    pyproject.toml /opt/sbo/pyproject.toml
+    uv.lock /opt/sbo/uv.lock
+
+%setup
+    mkdir -p ${APPTAINER_ROOTFS}/host-mpi-root
+    mkdir -p ${APPTAINER_ROOTFS}/host-dep-lib
+
+%post
+    set -eu
+
+    # 1. Install system dependencies (compiler for building mpi4py against the host MPI)
+    apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        git \
+        ca-certificates \
+        libgomp1
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+
+    # 2. Install uv (pinned for reproducible builds)
+    pip install --no-cache-dir uv==0.13.7
+
+    # 3. Install the locked runtime dependencies from uv.lock into /opt/venv.
+    #    mpi4py is built from source against the host MPI, which build_apptainer.sh binds
+    #    at /host-mpi-root during the build.
+    export OPAL_PREFIX=/host-mpi-root
+    export PATH=/host-mpi-root/bin:$PATH
+    export LD_LIBRARY_PATH=/host-mpi-root/lib:/host-dep-lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    export OMPI_CC=gcc
+    export MPICC=/host-mpi-root/bin/mpicc
+
+    cd /opt/sbo
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    UV_PYTHON=/usr/local/bin/python3.10 \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_NO_CACHE=1 \
+    uv sync --locked --no-dev --extra benchmarks --no-install-project --no-binary-package mpi4py
+
+%environment
+    export OPAL_PREFIX=/host-mpi-root
+    export VIRTUAL_ENV=/opt/venv
+    export PATH=/opt/venv/bin:/host-mpi-root/bin:$PATH
+    export LD_LIBRARY_PATH=/host-mpi-root/lib:/host-dep-lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    export LC_ALL=C
+    # Repository is bind-mounted at /app; `import sbo` resolves from /app/src
+    export PYTHONPATH="/app/src${PYTHONPATH:+:$PYTHONPATH}"
+    export TMPDIR=/tmp
+    export TEMP=/tmp
+    export TMP=/tmp
+    export MPLCONFIGDIR=/tmp/matplotlib
+    export XDG_CACHE_HOME=/tmp/.cache
+    export NUMBA_CACHE_DIR=/tmp/numba
+    export JOBLIB_TEMP_FOLDER=/tmp/joblib
+
+    # Ensure threads are limited
+    export OMP_NUM_THREADS=1
+    export OPENBLAS_NUM_THREADS=1
+    export MKL_NUM_THREADS=1
+    export VECLIB_MAXIMUM_THREADS=1
+    export NUMEXPR_NUM_THREADS=1
+
+    # Prevent .pyc write
+    export PYTHONDONTWRITEBYTECODE=1

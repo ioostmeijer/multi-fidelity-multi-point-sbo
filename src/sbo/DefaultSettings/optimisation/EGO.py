@@ -1,0 +1,29 @@
+from .COMMON import OPTIMISATION_ALL_DEFAULT_SETTINGS
+
+"""Default settings used in all EGO (Efficient Global optimisation) algorithms.
+
+Keys:
+    All keys from OPTIMISATION_ALL_DEFAULT_SETTINGS
+"""
+EGO_COMBINED_DEFAULT_SETTINGS = OPTIMISATION_ALL_DEFAULT_SETTINGS
+
+"""Default settings for the EGO Sequential algorithm.
+
+Keys:
+    All keys from OPTIMISATION_ALL_DEFAULT_SETTINGS
+"""
+EGOSEQUENTIAL_DEFAULT_SETTINGS = OPTIMISATION_ALL_DEFAULT_SETTINGS
+
+"""Default settings for the EGO MPI algorithm.
+
+Keys:
+    All keys from OPTIMISATION_ALL_DEFAULT_SETTINGS
+"""
+EGOMPI_DEFAULT_SETTINGS = OPTIMISATION_ALL_DEFAULT_SETTINGS
+
+"""Default settings for the EGO Async algorithm.
+
+Keys:
+    All keys from OPTIMISATION_ALL_DEFAULT_SETTINGS
+"""
+EGOASYNC_DEFAULT_SETTINGS = OPTIMISATION_ALL_DEFAULT_SETTINGS

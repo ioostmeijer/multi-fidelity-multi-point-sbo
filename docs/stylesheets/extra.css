@@ -1,0 +1,52 @@
+/* Mermaid diagrams in the style of the draw.io diagrams in docs/assets.
+ * Material draws Mermaid in a closed shadow DOM: only CSS variables reach it, so the colours are defined here and used
+ * by docs/javascripts/mermaid_style.js, which styles the nodes by their Mermaid class (`class X sbo` in a diagram).
+ * The dark values are the ones draw.io uses for the same colours in dark mode. */
+
+:root {
+  /* User, inputs and outputs (grey) */
+  --dg-user-fill: #f5f5f5;
+  --dg-user-stroke: #666666;
+  /* Config (purple) */
+  --dg-config-fill: #e1d5e7;
+  --dg-config-stroke: #9673a6;
+  /* SBO (blue) */
+  --dg-sbo-fill: #dae8fc;
+  --dg-sbo-stroke: #6c8ebf;
+  /* Optimisation algorithm (green) */
+  --dg-optimisation-fill: #d5e8d4;
+  --dg-optimisation-stroke: #82b366;
+  /* Surrogate (orange) */
+  --dg-surrogate-fill: #ffe6cc;
+  --dg-surrogate-stroke: #d79b00;
+  /* Infill strategy (yellow) */
+  --dg-infill-fill: #fff2cc;
+  --dg-infill-stroke: #d6b656;
+  --dg-text: #000000;
+}
+
+[data-md-color-scheme="slate"] {
+  --dg-user-fill: #1a1a1a;
+  --dg-user-stroke: #959595;
+  --dg-config-fill: #392f3f;
+  --dg-config-stroke: #9577a3;
+  --dg-sbo-fill: #1d293b;
+  --dg-sbo-stroke: #5c79a3;
+  --dg-optimisation-fill: #1f2f1e;
+  --dg-optimisation-stroke: #446e2c;
+  --dg-surrogate-fill: #36210a;
+  --dg-surrogate-stroke: #996500;
+  --dg-infill-fill: #281d00;
+  --dg-infill-stroke: #6d5100;
+  --dg-text: #ffffff;
+}
+
+/* Material's own Mermaid variables: Helvetica, plain arrows in the text colour, labels on the page background */
+[data-md-color-scheme] {
+  --md-mermaid-font-family: Helvetica, Arial, sans-serif;
+  --md-mermaid-edge-color: var(--dg-text);
+  --md-mermaid-label-fg-color: var(--dg-text);
+  --md-mermaid-label-bg-color: var(--md-default-bg-color);
+  --md-mermaid-node-fg-color: var(--dg-text);
+  --md-mermaid-node-bg-color: var(--dg-user-fill);
+}

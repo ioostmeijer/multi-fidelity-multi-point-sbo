@@ -1,0 +1,54 @@
+name: Set up environment
+description: Install uv, Python, MPI (Linux only) and the locked dependencies from uv.lock
+
+inputs:
+  python-version:
+    description: Python version to install
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set up uv and Python
+      uses: astral-sh/setup-uv@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+        enable-cache: true
+        cache-dependency-glob: |
+          uv.lock
+          pyproject.toml
+
+    - name: Install MPI (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y mpich libmpich-dev
+
+    - name: Install locked dependencies (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      env:
+        MPICC: mpicc
+        MPI4PY_MPI: mpich
+        UV_NO_BINARY_PACKAGE: mpi4py
+      run: uv sync --locked
+
+    - name: Install locked dependencies (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        uv sync --locked
+        uv pip uninstall mpi4py
+
+    # Put the venv on PATH so later steps can call python/pytest/deptry/mkdocs directly
+    # (without `uv run`, which would re-sync and reinstall mpi4py on Windows).
+    - name: Activate virtual environment
+      shell: bash
+      run: |
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          echo "$GITHUB_WORKSPACE/.venv/Scripts" >> "$GITHUB_PATH"
+        else
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+        fi
+        echo "VIRTUAL_ENV=$GITHUB_WORKSPACE/.venv" >> "$GITHUB_ENV"

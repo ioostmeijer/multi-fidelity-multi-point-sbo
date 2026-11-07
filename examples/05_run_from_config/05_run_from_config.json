@@ -1,0 +1,19 @@
+{
+  "name": "05_run_from_config",
+  "used_algorithms": {
+    "surrogate": "KRG",
+    "infill": "EI",
+    "optimisation": "EgoAsync"
+  },
+  "functions": {
+    "module": "mf2",
+    "attribute": "Forrester",
+    "n_fidelities": 1
+  },
+  "settings": {
+    "optimisation": {},
+    "surrogate": {},
+    "infill": {},
+    "function_delay": null
+  }
+}

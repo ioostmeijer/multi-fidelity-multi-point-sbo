@@ -1,0 +1,155 @@
+name: Extended tests
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'uv.lock'
+      - 'pyproject.toml'
+      - '.github/workflows/extended.yml'
+      - '.github/actions/**'
+  workflow_dispatch:
+    inputs:
+      run_verification:
+        description: "Run verification tests"
+        type: boolean
+        default: true
+      run_e2e:
+        description: "Run E2E tests"
+        type: boolean
+        default: true
+      run_coverage:
+        description: "Run coverage report"
+        type: boolean
+        default: true
+  # schedule:
+  #   - cron: "0 3 * * 1"   # Mondays 03:00 UTC
+
+permissions:
+  contents: read
+
+concurrency:
+  group: extended-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verification:
+    name: Verification (${{ matrix.os }})
+    if: github.event_name == 'push' || github.event_name == 'schedule' || inputs.run_verification
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Enable Git long paths (Windows)
+        if: runner.os == 'Windows'
+        run: git config --global core.longpaths true
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up environment
+        uses: ./.github/actions/setup-env
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run non-MPI verification
+        shell: bash
+        run: |
+          python -m pytest \
+            -n 2 \
+            --dist=loadscope \
+            --max-worker-restart=0 \
+            -m 'verification and not (mpi or mock_mpi)' \
+            -q
+
+      - name: Run MPI verification (Linux only)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mpiexec -n 2 python -m pytest --with-mpi -p no:xdist -m 'verification and (mpi or mock_mpi)' -q
+
+  e2e:
+    name: E2E (${{ matrix.os }})
+    if: github.event_name == 'push' || github.event_name == 'schedule' || inputs.run_e2e
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Enable Git long paths (Windows)
+        if: runner.os == 'Windows'
+        run: git config --global core.longpaths true
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up environment
+        uses: ./.github/actions/setup-env
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run non-MPI E2E tests
+        shell: bash
+        run: |
+          python -m pytest -m 'e2e and not (mpi or mock_mpi)'
+
+      - name: Run MPI E2E tests (Linux only)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          mpiexec -n 2 python -m pytest --with-mpi -p no:xdist -m 'e2e and (mpi or mock_mpi)'
+
+  coverage:
+    name: Coverage (ubuntu-latest)
+    if: github.event_name == 'schedule' || inputs.run_coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up environment
+        uses: ./.github/actions/setup-env
+        with:
+          python-version: "3.10"
+
+      - name: Coverage non-MPI
+        run: |
+          python -m pytest \
+            --dist=loadscope \
+            --max-worker-restart=0 \
+            -m 'not (mpi or mock_mpi)' \
+            --cov=sbo \
+            --cov-append \
+            -q
+
+      - name: Coverage MPI
+        run: |
+          mpiexec -n 2 python -m coverage run \
+            --parallel-mode \
+            -m pytest \
+            -p no:xdist \
+            -m '(mpi or mock_mpi)' \
+            -q
+
+      - name: Combine coverage data
+        run: |
+          python -m coverage combine --append
+          python -m coverage xml
+          python -m coverage report
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+          if-no-files-found: error

@@ -1,0 +1,6 @@
+# Normalise line endings: store all text files with LF in the repository
+* text=auto
+
+# HPC scripts run on Linux: always check out with LF line endings
+*.sh text eol=lf
+*.def text eol=lf
