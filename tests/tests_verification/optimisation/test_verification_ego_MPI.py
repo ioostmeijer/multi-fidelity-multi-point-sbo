@@ -38,6 +38,10 @@ def test_verification_ego_mpi() -> None:
         else:
             function = selected_functions.functions[0]
 
+        # Get the known optimum
+        known_opt_x = selected_functions.x_opt
+        known_opt_y = function(known_opt_x)
+
         optimum_solution = {"value": float("inf")}
         # Run for several random seeds to overcome possible bad initial state
         for random_seed in range(25):
@@ -90,9 +94,19 @@ def test_verification_ego_mpi() -> None:
             if MPI is not None and MPI.COMM_WORLD.Get_rank() == 0:
                 Config.destroy_instance()
 
-        # Get the known optimum
-        known_opt_x = selected_functions.x_opt
-        known_opt_y = function(known_opt_x)
+            # Stop once a seed reaches the known optimum: later seeds cannot improve
+            # the best solution. Rank 0 decides and broadcasts the decision, so all
+            # ranks leave the loop together.
+            if MPI is not None:
+                converged = None
+                if MPI.COMM_WORLD.Get_rank() == 0:
+                    converged = bool(
+                        np.isclose(
+                            optimum_solution["value"], known_opt_y, atol=1e-3, rtol=0
+                        )
+                    )
+                if MPI.COMM_WORLD.bcast(converged, root=0):
+                    break
 
         # Assert the found optimum and solution are close.
         if MPI is not None and MPI.COMM_WORLD.Get_rank() == 0:
