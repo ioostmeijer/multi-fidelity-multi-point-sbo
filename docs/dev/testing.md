@@ -9,7 +9,7 @@ selected with `-m`.
 | --------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
 | `tests/tests_unittest/`     | `unit`         | Each class and function on its own, mostly with dummy components.                                                                                                        | Fast  |
 | `tests/tests_verification/` | `verification` | Results against reference implementations: SMT's Kriging, RBF and EGO, a quadrature of GEI, the hierarchical Kriging equations, and known optima of benchmark functions. | Slow  |
-| `tests/tests_e2e/`          | `e2e`          | Complete optimisations on the Himmelblau function, single- and multi-fidelity.                                                                                           | Slow  |
+| `tests/tests_e2e/`          | `e2e`          | Complete optimisations on the cheap 1D Forrester function, single- and multi-fidelity: checks that a full run works, not accuracy.                                       | Slow  |
 
 Tests that need MPI are marked `mpi` (real MPI, run with `mpiexec`) or `mock_mpi` (the `mockmpi` package, which
 simulates several ranks in one process). Both are skipped on Windows CI.
@@ -41,7 +41,7 @@ SBO_TEST_PLOT_DIR=verification_plots pytest tests/tests_verification/surrogate  
 | `dummy_surrogate.py`   | `DummySurrogate`, `DummySurrogateWithVariance`, ...: surrogates with fixed predictions, for testing infill strategies and optimisers without training a model. |
 | `dummy_infill.py`      | A dummy infill strategy with a fixed output, for testing optimisers.                                                                                           |
 | `logger_helper.py`     | `_make_logger()` for a test logger, and `_find_log_file()` to check log output.                                                                                |
-| `template_e2e.py`      | `template_for_e2e_test(used_algorithms, settings, ...)`: runs a full optimisation on Himmelblau and checks the optimum within `RESULT_TOLERANCE` (`1e-3`).     |
+| `template_e2e.py`      | `template_for_e2e_test(used_algorithms, settings, ...)`: runs a full optimisation on Forrester and checks the optimum within `RESULT_TOLERANCE` (`1e-2`).      |
 | `surrogate_plotter.py` | Plots a surrogate against the true function, for inspecting a failing verification test (see `SBO_TEST_PLOT_DIR` above).                                       |
 
 `tests/conftest.py` runs every test in its own temporary working directory, resets the `Config` singleton and the

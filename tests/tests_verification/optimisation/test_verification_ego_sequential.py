@@ -33,6 +33,10 @@ def test_verification_ego_sequential() -> None:
         else:
             function = selected_functions.functions[0]
 
+        # Get the known optimum
+        known_opt_x = selected_functions.x_opt
+        known_opt_y = function(known_opt_x)
+
         optimum_solution = {"value": float("inf")}
         # Run for several random seeds to overcome possible bad initial state
         for random_seed in range(10):
@@ -60,7 +64,7 @@ def test_verification_ego_sequential() -> None:
             ego_sequential = EgoSequential(config)
 
             # Get initial samples using LHS
-            lhs = LHS(xlimits=config.bounds)
+            lhs = LHS(xlimits=config.bounds, seed=random_seed)
             x_initial = lhs(5 * config.n_dimensions)
             y_initial = function(x_initial)
 
@@ -82,9 +86,10 @@ def test_verification_ego_sequential() -> None:
             # Delete the config to set up for the next test
             Config.destroy_instance()
 
-        # Get the known optimum
-        known_opt_x = selected_functions.x_opt
-        known_opt_y = function(known_opt_x)
+            # Stop once a seed reaches the known optimum: later seeds cannot improve
+            # the best solution
+            if np.isclose(optimum_solution["value"], known_opt_y, atol=1e-3, rtol=0):
+                break
 
         # Assert the found optimum and solution are close.
         assert np.isclose(optimum_solution["value"], known_opt_y, atol=1e-3, rtol=0), (

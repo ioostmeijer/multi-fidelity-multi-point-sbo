@@ -59,11 +59,13 @@ group (`uv sync --locked --only-group lint`), without the package or MPI, and ru
 | -------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------- |
 | `lint.yml`     | All pushes and pull requests to `main` and `dev`, including documentation-only changes   | Pre-commit hooks on all files                 |
 | `ci.yml`       | Pushes and pull requests to `main` and `dev` that touch `src/`, `tests/` or dependencies | deptry, unit tests (Linux and Windows)        |
-| `extended.yml` | Merges to `main` that touch code; manually on any branch                                 | Verification and E2E tests; coverage (manual) |
+| `extended.yml` | Non-draft pull requests to `main` that touch code; manually on any branch                | Verification and E2E tests; coverage (manual) |
 | `docs.yml`     | Pushes to `main` and pull requests                                                       | Builds the docs; deploys them on `main`       |
 
-To run the extended tests on another branch, open **Actions → Extended tests → Run workflow** and select the branch, or
-run `gh workflow run extended.yml --ref <branch>`.
+The extended tests are slow, so they run on a pull request to `main` only once it is out of draft. Open the pull request
+as a draft while you are still pushing to it, then mark it **Ready for review** to run them; a later push cancels the
+run in progress and starts a new one. They aren't run again on the merge commit. To run them on another branch, open
+**Actions → Extended tests → Run workflow** and select the branch, or run `gh workflow run extended.yml --ref <branch>`.
 
 ## Dependencies
 

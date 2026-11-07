@@ -1,6 +1,6 @@
 import pytest
 from logger_helper import _make_logger
-from mf2 import himmelblau
+from mf2 import forrester
 
 from sbo import SBO, Config
 
@@ -17,6 +17,11 @@ def template_for_e2e_test(
 ) -> None:
     """Template used in end-to-end optimisation tests.
 
+    The end-to-end tests check that a full optimisation runs and returns a solution, not
+    the accuracy of the algorithms (that is covered by the verification tests). They
+    therefore use the cheap, one-dimensional Forrester function, whose single global
+    optimum is easy to reach.
+
     used_algorithms: dict
         Dictionary specifying the algorithms to be used in the optimisation.
     settings: dict
@@ -26,22 +31,41 @@ def template_for_e2e_test(
     :return: None
     """
     if single_fid:
-        functions = [himmelblau.functions[0]]
+        functions = [forrester.functions[0]]
     else:
-        functions = himmelblau.functions
+        functions = forrester.functions
 
     config = Config(
         used_algorithms=used_algorithms,
-        lb=himmelblau.l_bound,
-        ub=himmelblau.u_bound,
+        lb=forrester.l_bound,
+        ub=forrester.u_bound,
         functions=functions,
         settings=settings,
         logger=_make_logger(),
     )
     sbo = SBO(config)
-    found_optimum = sbo()
 
-    # Check if the found optimum is of the correct format
+    try:
+        found_optimum = sbo()
+
+        if mpi_comm is not None:
+            mpi_comm.Barrier()
+
+        # Only the coordinator (rank 0) returns the optimum; the workers have no
+        # solution to check.
+        if mpi_comm is None or mpi_comm.Get_rank() == 0:
+            _check_optimum(found_optimum)
+    finally:
+        # Always clean up and synchronise, also when an assertion fails: otherwise the
+        # other ranks wait at the next collective call forever (deadlock).
+        Config.destroy_instance()
+
+        if mpi_comm is not None:
+            mpi_comm.Barrier()
+
+
+def _check_optimum(found_optimum: dict) -> None:
+    """Check the format of the optimum and that it is the Forrester optimum."""
     assert isinstance(found_optimum, dict), (
         f"Optimum should be a dict, " f"got {type(found_optimum)}."
     )
@@ -50,37 +74,19 @@ def template_for_e2e_test(
         f"while it has: {list(found_optimum)}."
     )
 
-    # Check if the found optimum is close to the known optimum
-    func_expected = 0.0
-    coord_expected = [
-        [3, 2],
-        [-2.805118, 3.131312],
-        [-3.779310, -3.283186],
-        [3.584428, -1.848126],
-    ]
-
-    if mpi_comm is not None:
-        mpi_comm.Barrier()
+    # Known optimum of the high-fidelity Forrester function (x ~ 0.757, f ~ -6.021)
+    coord_expected = forrester.x_opt
+    func_expected = float(forrester.functions[0](coord_expected.reshape(1, -1))[0])
 
     # Absolute tolerance for the final optimum (value and coordinates)
-    if mpi_comm is None or mpi_comm.Get_rank() == 0:
-        assert abs(found_optimum["value"] - func_expected) < RESULT_TOLERANCE, (
-            f"Found optimum value {found_optimum['value']} differs from "
-            f"expected {func_expected} by more than {RESULT_TOLERANCE}."
-        )
-        assert any(
-            all(
-                abs(a - b) < RESULT_TOLERANCE
-                for a, b in zip(found_optimum["coord"], ce)
-            )
-            for ce in coord_expected
-        ), (
-            f"Found optimum coord {found_optimum['coord']} differs from "
-            f"expected coords {coord_expected} by more than {RESULT_TOLERANCE}."
-        )
-
-    # Delete config
-    Config.destroy_instance()
-
-    if mpi_comm is not None:
-        mpi_comm.Barrier()
+    assert abs(found_optimum["value"] - func_expected) < RESULT_TOLERANCE, (
+        f"Found optimum value {found_optimum['value']} differs from "
+        f"expected {func_expected} by more than {RESULT_TOLERANCE}."
+    )
+    assert all(
+        abs(a - b) < RESULT_TOLERANCE
+        for a, b in zip(found_optimum["coord"], coord_expected)
+    ), (
+        f"Found optimum coord {found_optimum['coord']} differs from "
+        f"expected coord {coord_expected} by more than {RESULT_TOLERANCE}."
+    )
