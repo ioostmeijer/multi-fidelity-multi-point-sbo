@@ -90,9 +90,9 @@ def test_verification_ego_mpi() -> None:
             if MPI is not None:
                 MPI.COMM_WORLD.Barrier()
 
-            # Delete the config to set up for the next test
-            if MPI is not None and MPI.COMM_WORLD.Get_rank() == 0:
-                Config.destroy_instance()
+            # Delete the config on every rank (it is a per-process singleton) to set
+            # up for the next seed
+            Config.destroy_instance()
 
             # Stop once a seed reaches the known optimum: later seeds cannot improve
             # the best solution. Rank 0 decides and broadcasts the decision, so all
