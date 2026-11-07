@@ -68,8 +68,21 @@ jobs:
             -m 'verification and not (mpi or mock_mpi)' \
             -q
 
-      - name: Run MPI verification (Linux only)
-        if: runner.os == 'Linux'
+  verification-mpi:
+    name: Verification MPI (ubuntu-latest)
+    if: github.event_name == 'push' || github.event_name == 'schedule' || inputs.run_verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up environment
+        uses: ./.github/actions/setup-env
+        with:
+          python-version: "3.10"
+
+      - name: Run MPI verification
         shell: bash
         run: |
           mpiexec -n 2 python -m pytest --with-mpi -p no:xdist -m 'verification and (mpi or mock_mpi)' -q
@@ -102,8 +115,21 @@ jobs:
         run: |
           python -m pytest -m 'e2e and not (mpi or mock_mpi)'
 
-      - name: Run MPI E2E tests (Linux only)
-        if: runner.os == 'Linux'
+  e2e-mpi:
+    name: E2E MPI (ubuntu-latest)
+    if: github.event_name == 'push' || github.event_name == 'schedule' || inputs.run_e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up environment
+        uses: ./.github/actions/setup-env
+        with:
+          python-version: "3.10"
+
+      - name: Run MPI E2E tests
         shell: bash
         run: |
           mpiexec -n 2 python -m pytest --with-mpi -p no:xdist -m 'e2e and (mpi or mock_mpi)'
