@@ -4,22 +4,8 @@ on:
   pull_request:
     branches: [ main ]
     types: [ opened, synchronize, reopened, ready_for_review ]
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - 'uv.lock'
-      - 'pyproject.toml'
-      - '.github/workflows/extended.yml'
-      - '.github/actions/**'
   push:
     branches: [ main ]
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - 'uv.lock'
-      - 'pyproject.toml'
-      - '.github/workflows/extended.yml'
-      - '.github/actions/**'
   workflow_dispatch:
     inputs:
       run_verification:
@@ -45,13 +31,33 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    name: Detect code changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.detect.outputs.code }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Detect code changes
+        id: detect
+        uses: ./.github/actions/detect-code-changes
+        with:
+          pattern: '^(src/|tests/|uv\.lock$|pyproject\.toml$|\.github/actions/|\.github/workflows/extended\.yml$)'
+
   verification:
     name: Verification (${{ matrix.os }})
+    needs: changes
     if: >
-      (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
-      (github.event_name == 'push' && github.event.head_commit &&
-       !startsWith(github.event.head_commit.message, 'Merge pull request')) ||
-      github.event_name == 'schedule' || inputs.run_verification
+      needs.changes.outputs.code == 'true' && (
+        (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
+        (github.event_name == 'push' && github.event.head_commit &&
+         !startsWith(github.event.head_commit.message, 'Merge pull request')) ||
+        github.event_name == 'schedule' || inputs.run_verification)
     timeout-minutes: 120
     strategy:
       fail-fast: false
@@ -84,11 +90,13 @@ jobs:
 
   verification-mpi:
     name: Verification MPI (ubuntu-latest)
+    needs: changes
     if: >
-      (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
-      (github.event_name == 'push' && github.event.head_commit &&
-       !startsWith(github.event.head_commit.message, 'Merge pull request')) ||
-      github.event_name == 'schedule' || inputs.run_verification
+      needs.changes.outputs.code == 'true' && (
+        (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
+        (github.event_name == 'push' && github.event.head_commit &&
+         !startsWith(github.event.head_commit.message, 'Merge pull request')) ||
+        github.event_name == 'schedule' || inputs.run_verification)
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -107,11 +115,13 @@ jobs:
 
   e2e:
     name: E2E (${{ matrix.os }})
+    needs: changes
     if: >
-      (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
-      (github.event_name == 'push' && github.event.head_commit &&
-       !startsWith(github.event.head_commit.message, 'Merge pull request')) ||
-      github.event_name == 'schedule' || inputs.run_e2e
+      needs.changes.outputs.code == 'true' && (
+        (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
+        (github.event_name == 'push' && github.event.head_commit &&
+         !startsWith(github.event.head_commit.message, 'Merge pull request')) ||
+        github.event_name == 'schedule' || inputs.run_e2e)
     timeout-minutes: 120
     strategy:
       fail-fast: false
@@ -139,11 +149,13 @@ jobs:
 
   e2e-mpi:
     name: E2E MPI (ubuntu-latest)
+    needs: changes
     if: >
-      (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
-      (github.event_name == 'push' && github.event.head_commit &&
-       !startsWith(github.event.head_commit.message, 'Merge pull request')) ||
-      github.event_name == 'schedule' || inputs.run_e2e
+      needs.changes.outputs.code == 'true' && (
+        (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
+        (github.event_name == 'push' && github.event.head_commit &&
+         !startsWith(github.event.head_commit.message, 'Merge pull request')) ||
+        github.event_name == 'schedule' || inputs.run_e2e)
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -205,3 +217,27 @@ jobs:
           name: coverage-xml
           path: coverage.xml
           if-no-files-found: error
+
+  extended-passed:
+    name: Extended tests passed
+    if: always()
+    needs: [changes, verification, verification-mpi, e2e, e2e-mpi, coverage]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check job results
+        shell: bash
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+          DRAFT: ${{ github.event.pull_request.draft }}
+        run: |
+          echo "Job results: $RESULTS"
+          if [[ "$DRAFT" == true ]]; then
+            echo "::notice::Draft pull request: the extended tests run once it is marked ready for review."
+          fi
+          for result in $RESULTS; do
+            if [[ "$result" != success && "$result" != skipped ]]; then
+              echo "::error::An extended test job finished with '$result'."
+              exit 1
+            fi
+          done

@@ -5,22 +5,8 @@ name: CI
 on:
   push:
     branches: [ main, dev ]
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - 'uv.lock'
-      - 'pyproject.toml'
-      - '.github/workflows/ci.yml'
-      - '.github/actions/**'
   pull_request:
     branches: [ main, dev ]
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - 'uv.lock'
-      - 'pyproject.toml'
-      - '.github/workflows/ci.yml'
-      - '.github/actions/**'
   workflow_dispatch:
 
 permissions:
@@ -31,10 +17,31 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    name: Detect code changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.detect.outputs.code }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Detect code changes
+        id: detect
+        uses: ./.github/actions/detect-code-changes
+        with:
+          pattern: '^(src/|tests/|uv\.lock$|pyproject\.toml$|\.github/actions/|\.github/workflows/ci\.yml$)'
+
   test:
+    needs: changes
+    # Skipped when no code changed, and on the merge commit of a pull request (already tested on the pull request).
     if: >
-      github.event_name != 'push' ||
-      (github.event.head_commit && !startsWith(github.event.head_commit.message, 'Merge pull request'))
+      needs.changes.outputs.code == 'true' &&
+      (github.event_name != 'push' ||
+       (github.event.head_commit && !startsWith(github.event.head_commit.message, 'Merge pull request')))
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -75,3 +82,23 @@ jobs:
         shell: bash
         run: |
           mpiexec -n 2 python -m pytest --with-mpi -p no:xdist -m '(mpi or mock_mpi) and unit' -q
+
+  ci-passed:
+    name: CI passed
+    if: always()
+    needs: [changes, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check job results
+        shell: bash
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $RESULTS"
+          for result in $RESULTS; do
+            if [[ "$result" != success && "$result" != skipped ]]; then
+              echo "::error::A CI job finished with '$result'."
+              exit 1
+            fi
+          done
