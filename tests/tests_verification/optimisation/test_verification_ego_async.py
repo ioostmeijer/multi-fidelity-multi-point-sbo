@@ -29,6 +29,7 @@ def test_verification_ego_async() -> None:
         MPI = None
 
     report = ""
+    failures = []
 
     # Select all functions except Hartmann6 and Borehole. These functions are too
     # expensive to continuously be testing. The EGO async has been shown to be able
@@ -118,37 +119,43 @@ def test_verification_ego_async() -> None:
 
         # Assert the found optimum and solution are close.
         if MPI is not None and MPI.COMM_WORLD.Get_rank() == 0:
-            assert np.isclose(
-                optimum_solution["value"], known_opt_y, atol=1e-3, rtol=0
-            ), (
-                "The found solution and the known optimum are not equal for function: "
-                f"{selected_functions.name}.\nknown optimum: {known_opt_y}\n"
-                f"Found optimum: {optimum_solution['value']}"
-                f"\nThe difference: {known_opt_y - optimum_solution['value']}\n"
-                f"Relative difference: "
-                f"{(known_opt_y - optimum_solution['value']) / known_opt_y}"
-            )
+            try:
+                assert np.isclose(
+                    optimum_solution["value"], known_opt_y, atol=1e-3, rtol=0
+                ), (
+                    "The found solution and the known optimum are not equal for "
+                    f"function: {selected_functions.name}.\n"
+                    f"known optimum: {known_opt_y}\n"
+                    f"Found optimum: {optimum_solution['value']}"
+                    f"\nThe difference: {known_opt_y - optimum_solution['value']}\n"
+                    f"Relative difference: "
+                    f"{(known_opt_y - optimum_solution['value']) / known_opt_y}"
+                )
 
-            # Assert that the found optimum is never better than the actual optimum
-            assert optimum_solution["value"] >= known_opt_y, (
-                "The optimum is better than the known optimum for function: "
-                f"{selected_functions.name}. \n"
-                f"Known optimum: {optimum_solution['value']}\nFound optimum: "
-                f"{known_opt_y}"
-            )
+                # Assert that the found optimum is never better than the actual optimum
+                assert optimum_solution["value"] >= known_opt_y, (
+                    "The optimum is better than the known optimum for function: "
+                    f"{selected_functions.name}. \n"
+                    f"Known optimum: {optimum_solution['value']}\nFound optimum: "
+                    f"{known_opt_y}"
+                )
 
-            # Print the absolute and relative difference
-            diff = known_opt_y - optimum_solution["value"]
-            rel_diff = diff / optimum_solution["value"]
-            report += (
-                "-" * 50 + f"\nFunction: {selected_functions.name}\n"
-                f"Absolute difference: {diff}\n"
-                f"Relative difference: {rel_diff}\n"
-                f"Found optimum: {optimum_solution['value']}\n"
-                f"Known optimum: {known_opt_y}\n"
-            )
+                # Print the absolute and relative difference
+                diff = known_opt_y - optimum_solution["value"]
+                rel_diff = diff / optimum_solution["value"]
+                report += (
+                    "-" * 50 + f"\nFunction: {selected_functions.name}\n"
+                    f"Absolute difference: {diff}\n"
+                    f"Relative difference: {rel_diff}\n"
+                    f"Found optimum: {optimum_solution['value']}\n"
+                    f"Known optimum: {known_opt_y}\n"
+                )
+            except AssertionError as error:
+                failures.append(str(error))
 
         if MPI is not None:
             MPI.COMM_WORLD.Barrier()
 
     print(report)
+
+    assert not failures, "\n\n".join(failures)

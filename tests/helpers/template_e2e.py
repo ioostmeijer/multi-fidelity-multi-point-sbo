@@ -44,9 +44,28 @@ def template_for_e2e_test(
         logger=_make_logger(),
     )
     sbo = SBO(config)
-    found_optimum = sbo()
 
-    # Check if the found optimum is of the correct format
+    try:
+        found_optimum = sbo()
+
+        if mpi_comm is not None:
+            mpi_comm.Barrier()
+
+        # Only the coordinator (rank 0) returns the optimum; the workers have no
+        # solution to check.
+        if mpi_comm is None or mpi_comm.Get_rank() == 0:
+            _check_optimum(found_optimum)
+    finally:
+        # Always clean up and synchronise, also when an assertion fails: otherwise the
+        # other ranks wait at the next collective call forever (deadlock).
+        Config.destroy_instance()
+
+        if mpi_comm is not None:
+            mpi_comm.Barrier()
+
+
+def _check_optimum(found_optimum: dict) -> None:
+    """Check the format of the optimum and that it is the Forrester optimum."""
     assert isinstance(found_optimum, dict), (
         f"Optimum should be a dict, " f"got {type(found_optimum)}."
     )
@@ -59,25 +78,15 @@ def template_for_e2e_test(
     coord_expected = forrester.x_opt
     func_expected = float(forrester.functions[0](coord_expected.reshape(1, -1))[0])
 
-    if mpi_comm is not None:
-        mpi_comm.Barrier()
-
     # Absolute tolerance for the final optimum (value and coordinates)
-    if mpi_comm is None or mpi_comm.Get_rank() == 0:
-        assert abs(found_optimum["value"] - func_expected) < RESULT_TOLERANCE, (
-            f"Found optimum value {found_optimum['value']} differs from "
-            f"expected {func_expected} by more than {RESULT_TOLERANCE}."
-        )
-        assert all(
-            abs(a - b) < RESULT_TOLERANCE
-            for a, b in zip(found_optimum["coord"], coord_expected)
-        ), (
-            f"Found optimum coord {found_optimum['coord']} differs from "
-            f"expected coord {coord_expected} by more than {RESULT_TOLERANCE}."
-        )
-
-    # Delete config
-    Config.destroy_instance()
-
-    if mpi_comm is not None:
-        mpi_comm.Barrier()
+    assert abs(found_optimum["value"] - func_expected) < RESULT_TOLERANCE, (
+        f"Found optimum value {found_optimum['value']} differs from "
+        f"expected {func_expected} by more than {RESULT_TOLERANCE}."
+    )
+    assert all(
+        abs(a - b) < RESULT_TOLERANCE
+        for a, b in zip(found_optimum["coord"], coord_expected)
+    ), (
+        f"Found optimum coord {found_optimum['coord']} differs from "
+        f"expected coord {coord_expected} by more than {RESULT_TOLERANCE}."
+    )
