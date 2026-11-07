@@ -1,6 +1,16 @@
 name: Extended tests
 
 on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'uv.lock'
+      - 'pyproject.toml'
+      - '.github/workflows/extended.yml'
+      - '.github/actions/**'
   push:
     branches: [ main ]
     paths:
@@ -32,12 +42,16 @@ permissions:
 
 concurrency:
   group: extended-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verification:
     name: Verification (${{ matrix.os }})
-    if: github.event_name == 'push' || github.event_name == 'schedule' || inputs.run_verification
+    if: >
+      (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
+      (github.event_name == 'push' && github.event.head_commit &&
+       !startsWith(github.event.head_commit.message, 'Merge pull request')) ||
+      github.event_name == 'schedule' || inputs.run_verification
     timeout-minutes: 120
     strategy:
       fail-fast: false
@@ -70,7 +84,11 @@ jobs:
 
   verification-mpi:
     name: Verification MPI (ubuntu-latest)
-    if: github.event_name == 'push' || github.event_name == 'schedule' || inputs.run_verification
+    if: >
+      (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
+      (github.event_name == 'push' && github.event.head_commit &&
+       !startsWith(github.event.head_commit.message, 'Merge pull request')) ||
+      github.event_name == 'schedule' || inputs.run_verification
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -89,7 +107,11 @@ jobs:
 
   e2e:
     name: E2E (${{ matrix.os }})
-    if: github.event_name == 'push' || github.event_name == 'schedule' || inputs.run_e2e
+    if: >
+      (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
+      (github.event_name == 'push' && github.event.head_commit &&
+       !startsWith(github.event.head_commit.message, 'Merge pull request')) ||
+      github.event_name == 'schedule' || inputs.run_e2e
     timeout-minutes: 120
     strategy:
       fail-fast: false
@@ -117,7 +139,11 @@ jobs:
 
   e2e-mpi:
     name: E2E MPI (ubuntu-latest)
-    if: github.event_name == 'push' || github.event_name == 'schedule' || inputs.run_e2e
+    if: >
+      (github.event_name == 'pull_request' && !github.event.pull_request.draft) ||
+      (github.event_name == 'push' && github.event.head_commit &&
+       !startsWith(github.event.head_commit.message, 'Merge pull request')) ||
+      github.event_name == 'schedule' || inputs.run_e2e
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
