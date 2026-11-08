@@ -244,7 +244,7 @@ class SurrogateBase(Base):
             if isinstance(point["value"], list) or isinstance(
                 point["value"], np.ndarray
             ):
-                point["value"] = float(np.atleast_1d(point["value"])[0])
+                point["value"] = float(np.ravel(point["value"])[0])
 
             self.samples.setdefault(fidelity, [])
 
