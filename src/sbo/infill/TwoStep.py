@@ -171,8 +171,8 @@ class TwoStep(InfillBase):
         var_hf = surrogate.predict_variance_fidelity(x_row, fidelity=0)
 
         # Extract scalar values from arrays
-        mu_hf = float(np.atleast_1d(mu_hf)[0])
-        var_hf = float(np.atleast_1d(var_hf)[0])
+        mu_hf = float(np.ravel(mu_hf)[0])
+        var_hf = float(np.ravel(var_hf)[0])
 
         if var_hf == 0.0:
             var_hf = 1e-10  # Prevent division by zero
@@ -183,8 +183,8 @@ class TwoStep(InfillBase):
         for fid in range(1, self.config.num_fidelities):
             mu_fid = surrogate.predict_values(x_row, fidelity=fid)
             var_fid = surrogate.predict_variance_fidelity(x_row, fidelity=fid)
-            mu_fid = float(np.atleast_1d(mu_fid)[0])
-            var_fid = float(np.atleast_1d(var_fid)[0])
+            mu_fid = float(np.ravel(mu_fid)[0])
+            var_fid = float(np.ravel(var_fid)[0])
             if var_fid == 0.0:
                 var_fid = 1e-10  # Prevent division by zero
 
