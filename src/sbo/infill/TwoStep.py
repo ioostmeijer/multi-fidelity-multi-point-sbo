@@ -10,13 +10,25 @@ from .Base import InfillBase
 
 
 class TwoStep(InfillBase):
-    """Two-step infill strategy for multi-fidelity optimisation.
+    r"""Two-step infill strategy for multi-fidelity optimisation.
 
     This method utilises a two-step approach to determine the next sampling point:
-    1. Determine the sample location based on a single-fidelity infill strategy
+
+    1. Determine the sample location $x$ based on a single-fidelity infill strategy.
     2. Determine the cheapest accurate enough fidelity to sample at that location,
-    based on the Jensen-Shannon distance (JSD) between the high-fidelity (HF)
-    surrogate and each lower-fidelity surrogate at the selected location.
+        based on the Jensen-Shannon distance (JSD) between the high-fidelity (HF)
+        surrogate and each lower-fidelity surrogate at the selected location.
+
+    In step 2, the prediction of fidelity $l$ at $x$ is the normal distribution
+    $P_l = \mathcal{N}\left(\hat{y}_l(x), \hat{s}_l^2(x)\right)$, with $l = 0$ the HF.
+    The fidelity sampled is the cheapest one (highest index) that is close enough to
+    the HF prediction:
+
+    $$
+    l^* = \max \left\{ l : \mathrm{JSD}(P_0, P_l) < \tau \right\}
+    $$
+
+    with $\tau$ the `jsd_threshold` setting. The HF ($l = 0$) always qualifies.
 
     The method is introduced by Garbo et al. [1].
 
@@ -145,12 +157,28 @@ class TwoStep(InfillBase):
     def _get_accurate_enough_fidelities(
         self, x: np.ndarray, surrogate: SurrogateBaseWithVariancePerFidelity
     ) -> list[int]:
-        """Get the list of fidelities which are accurate enough based on the JSD.
+        r"""Get the list of fidelities which are accurate enough based on the JSD.
 
         This method computes the Jensen-Shannon distance (JSD) between the
         high-fidelity (HF) surrogate and each lower-fidelity surrogate at the
         selected location. It returns a list of fidelity levels that are considered
         accurate enough based on a predefined JSD threshold.
+
+        The two normal distributions $P_0$ (HF) and $P_l$ (fidelity $l$) are evaluated
+        at `num_jsd_points` points between
+        $\min_i \left(\hat{y}_i(x) - 3 \hat{s}_i(x)\right)$ and
+        $\max_i \left(\hat{y}_i(x) + 3 \hat{s}_i(x)\right)$, $i \in \{0, l\}$, and
+        normalised to sum to 1. The distance (base 2, so between 0 and 1) is
+
+        $$
+        \mathrm{JSD}(P_0, P_l) = \sqrt{\frac{1}{2} D_{\mathrm{KL}}(P_0 \parallel M)
+            + \frac{1}{2} D_{\mathrm{KL}}(P_l \parallel M)},
+        \qquad M = \frac{1}{2} (P_0 + P_l)
+        $$
+
+        with $D_{\mathrm{KL}}$ the Kullback-Leibler divergence. Fidelity $l$ is
+        accurate enough if $\mathrm{JSD}(P_0, P_l) < \tau$ (`jsd_threshold`). A zero
+        predicted variance is replaced by $10^{-10}$.
 
         Parameters
         ----------

@@ -1,4 +1,4 @@
-"""Default settings used in all optimisation algorithms.
+r"""Default settings used in all optimisation algorithms.
 
 The convergence criteria compare the optimum of the surrogate model (the minimum of the
 HF surrogate prediction, 'surrogate_optimum' in the optimisation data), not the best
@@ -7,10 +7,11 @@ samples change the model, while the best observed value only changes when a bett
 sample is found.
 
 Keys:
-    - 'convergence_threshold': float | None, threshold for convergence if None this will
-        not be considered (default: 1e-6, must be >= 0.0)
-        (abs(surrogate optimum 'convergence_window' iterations ago - current surrogate
-        optimum) < convergence_threshold)
+    - 'convergence_threshold': float | None, threshold $\varepsilon$ for convergence if
+        None this will not be considered (default: 1e-6, must be >= 0.0). Converged
+        when $\lvert \hat{y}^*_{t-w} - \hat{y}^*_t \rvert < \varepsilon$, with
+        $\hat{y}^*_t$ the surrogate optimum in iteration $t$ and $w$ the
+        'convergence_window'
     - 'convergence_window': int | None, number of iterations to consider for
         convergence. Calculated as the difference between the surrogate optimum of the
         current iteration and the surrogate optimum 'convergence_window' iterations
@@ -38,11 +39,12 @@ Keys:
             1. "KB" for Kriging Believer (default)
             2. "CL" for Constant Liar
             (default: "KB", allowed: ["KB", "CL"])
-    - 'relative_convergence_threshold': float | None, relative threshold for
-        convergence, if None this stopping criterion will not be used.
-        abs(surrogate optimum 'convergence_window' iterations ago - current surrogate
-        optimum) / abs(surrogate optimum 'convergence_window' iterations ago) <
-        relative_convergence_threshold
+    - 'relative_convergence_threshold': float | None, relative threshold
+        $\varepsilon_r$ for convergence, if None this stopping criterion will not be
+        used. Converged when
+        $\lvert \hat{y}^*_{t-w} - \hat{y}^*_t \rvert / \lvert \hat{y}^*_{t-w} \rvert
+        < \varepsilon_r$, with the notation of 'convergence_threshold' (the
+        denominator is at least the machine epsilon)
         (default: 1e-6, must be >= 0.0)
 """
 

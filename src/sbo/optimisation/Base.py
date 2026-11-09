@@ -209,13 +209,20 @@ class OptimisationBase(Base):
         total_data: dict,
         optimisation_data: dict,
     ) -> bool:
-        """Calculate the stopping criteria for the optimisation process.
+        r"""Calculate the stopping criteria for the optimisation process.
 
         Calculates whether any of the stopping criteria have been met based on the
         current iteration, function calls, best objective value, previous best
         objective value, and infill value. The implemented stopping criteria are:
+
         - Maximum number of iterations.
-        - Convergence threshold (based on change in best objective value).
+        - Convergence threshold, based on the change in the surrogate optimum
+            $\hat{y}^*_t$ over the last $w$ iterations (`convergence_window`):
+            $\lvert \hat{y}^*_{t-w} - \hat{y}^*_t \rvert < \varepsilon$.
+        - Relative convergence threshold:
+            $\lvert \hat{y}^*_{t-w} - \hat{y}^*_t \rvert
+            / \max\left(\lvert \hat{y}^*_{t-w} \rvert, \epsilon_{\mathrm{mach}}\right)
+            < \varepsilon_r$.
         - Maximum number of function calls.
         - Maximum number of high-fidelity function calls.
         - Minimum infill value.
