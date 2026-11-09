@@ -16,6 +16,14 @@ All notable changes to this project are listed in this file. The format is based
     a class as the attribute.
 - `BENCHMARK_FUNCTION_DELAY` in `sbo.constants`.
 
+### Changed
+
+- Supports Python 3.11 to 3.14 (`requires-python = ">=3.11,<3.15"`), and the CI tests all four versions. Python 3.15
+    follows once smt publishes wheels for it.
+- The locked dependencies (`uv.lock`) are updated, among others NumPy 2.5 and SciPy 1.18 (NumPy 2.4 and SciPy 1.17 on
+    Python 3.11, which the newest versions no longer support), matplotlib 3.11 and smt 2.15.
+- The HPC container uses Python 3.14.
+
 ### Deprecated
 
 - `"module": "mf2"` in `Config.from_json`: it now uses the problem of the same name from `sbo.benchmarks`, so mf2 is no
@@ -30,6 +38,14 @@ All of these will be removed in version 2.0.0.
 
 - The dependency on mf2 (GPLv3): the `benchmarks` extra and the `test` group no longer install it, so the package and
     its documentation no longer need GPL notes.
+- Support for Python 3.10. Use version 1.0.0, the version of the thesis results, on Python 3.10.
+
+### Security
+
+- The updated locked dependencies fix the open Dependabot alerts. Pillow 13.0.0 (pulled in by matplotlib) is the only
+    one that affects the runtime; certifi, urllib3, virtualenv, filelock, black, pymdown-extensions and mkdocs-material
+    are only used for development. setuptools stays below 81 while `"module": "mf2"` is supported, because mf2 imports
+    `pkg_resources`; it is only needed to build and install the package.
 
 ## [1.0.0] - 2026-11-07
 
