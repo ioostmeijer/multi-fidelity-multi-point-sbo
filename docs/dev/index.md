@@ -10,7 +10,7 @@ The environment is managed with [uv](https://docs.astral.sh/uv/). Install the fu
 same one CI uses, including the test, docs and lint tools) and the pre-commit hooks:
 
 ```bash
-uv sync --locked                            # creates .venv with Python 3.10 and all dev dependencies
+uv sync --locked                            # creates .venv with the Python version in .python-version and all dev dependencies
 uv run pre-commit install
 ```
 

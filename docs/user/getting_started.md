@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- **Python 3.10**
+- **Python 3.11 to 3.14**
 - **An MPI implementation** (OpenMPI or MPICH on Linux and macOS, MS-MPI on Windows) for multi-point optimisation.
     Without MPI the package still installs and runs, but multi-point runs fall back to single-point `EgoSequential` with
     a warning.
@@ -21,8 +21,9 @@ To install the exact, locked environment with [uv](https://docs.astral.sh/uv/):
 uv sync --locked --no-dev   # runtime dependencies at the locked versions
 ```
 
-The thesis results were produced with version 1.0.0 (tag `v1.0.0`), which still used the benchmark functions from mf2.
-To reproduce them exactly, check out that tag and run `uv sync --locked --no-dev --extra benchmarks`.
+The thesis results were produced with version 1.0.0 (tag `v1.0.0`) on Python 3.10, which still used the benchmark
+functions from mf2. To reproduce them exactly, check out that tag and run
+`uv sync --locked --no-dev --extra benchmarks`. Version 1.0.0 is also the last version for Python 3.10.
 
 To run on a cluster, see [Running on HPC](hpc.md).
 
