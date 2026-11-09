@@ -150,6 +150,22 @@ The Docs workflow runs the same strict build, so make sure it passes before open
 
     Types do not have to be repeated in the `Parameters` section, as they are taken from the type hints in the signature.
 
+    **Formulas** are written in LaTeX between dollar signs: `$...$` inline, and `$$` on the lines before and after a
+    formula block (with a blank line around it). `pymdownx.arithmatex` and MathJax (see `mkdocs.yml`) typeset them in
+    the docs; the same syntax works in the Markdown pages. Make a docstring with LaTeX backslashes a raw string
+    (`r"""`), so Python doesn't read `\s` in `\sin` as an escape. Don't use the reStructuredText syntax `.. math::` or
+    `:math:`, which is meant for Sphinx: MkDocs shows it as plain text.
+
+    ```python
+    def forrester_high(x: np.ndarray) -> np.ndarray:
+        r"""Evaluate the high fidelity of the Forrester function.
+
+        $$
+        f_h(x) = (6x - 2)^2 \sin(12x - 4)
+        $$
+        """
+    ```
+
 - **Settings Reference:** every `*_DEFAULT_SETTINGS` dict in `src/sbo/DefaultSettings/` is listed by
     `docs/gen_settings_table.py`, with its type, default and constraints from the dict, and the description from the
     `Keys:` block above the dict (see [Default Settings](extending/index.md#default-settings)).
