@@ -50,7 +50,7 @@ jobs:
           pattern: '^(src/|tests/|uv\.lock$|pyproject\.toml$|\.github/actions/|\.github/workflows/extended\.yml$)'
 
   verification:
-    name: Verification (${{ matrix.os }})
+    name: Verification (${{ matrix.os }}, Python ${{ matrix.python-version }})
     needs: changes
     if: >
       needs.changes.outputs.code == 'true' && (
@@ -63,7 +63,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ["3.10"]
+        python-version: ["3.11", "3.14"]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Enable Git long paths (Windows)
@@ -106,7 +106,7 @@ jobs:
       - name: Set up environment
         uses: ./.github/actions/setup-env
         with:
-          python-version: "3.10"
+          python-version: "3.14"
 
       - name: Run MPI verification
         shell: bash
@@ -114,7 +114,7 @@ jobs:
           mpiexec -n 2 python -m pytest --with-mpi -p no:xdist -m 'verification and (mpi or mock_mpi)' -q
 
   e2e:
-    name: E2E (${{ matrix.os }})
+    name: E2E (${{ matrix.os }}, Python ${{ matrix.python-version }})
     needs: changes
     if: >
       needs.changes.outputs.code == 'true' && (
@@ -127,7 +127,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ["3.10"]
+        python-version: ["3.11", "3.14"]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Enable Git long paths (Windows)
@@ -165,7 +165,7 @@ jobs:
       - name: Set up environment
         uses: ./.github/actions/setup-env
         with:
-          python-version: "3.10"
+          python-version: "3.14"
 
       - name: Run MPI E2E tests
         shell: bash
@@ -184,7 +184,7 @@ jobs:
       - name: Set up environment
         uses: ./.github/actions/setup-env
         with:
-          python-version: "3.10"
+          python-version: "3.14"
 
       - name: Coverage non-MPI
         run: |
