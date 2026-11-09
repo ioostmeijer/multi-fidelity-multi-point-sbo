@@ -42,10 +42,11 @@ All of these will be removed in version 2.0.0.
 
 ### Security
 
-- The updated locked dependencies fix the open Dependabot alerts. Pillow 13.0.0 (pulled in by matplotlib) is the only
-    one that affects the runtime; certifi, urllib3, virtualenv, filelock, black, pymdown-extensions and mkdocs-material
-    are only used for development. setuptools stays below 81 while `"module": "mf2"` is supported, because mf2 imports
-    `pkg_resources`; it is only needed to build and install the package.
+- The updated locked dependencies fix the open Dependabot alerts, except those for setuptools (see below). Pillow 13.0.0
+    (pulled in by matplotlib) is the only one that affects the runtime; certifi, urllib3, virtualenv, filelock, black,
+    pymdown-extensions and mkdocs-material are only used for development. setuptools stays below 81 while
+    `"module": "mf2"` is supported, because mf2 imports `pkg_resources`; it is only needed to build and install the
+    package.
 
 ## [1.0.0] - 2026-11-07
 
