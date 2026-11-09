@@ -93,3 +93,25 @@ algorithms are listed automatically:
 
 An infill strategy that supports expensive constraints must be added to `EXPENSIVE_CONSTRAINT_COMPATIBLE_INFILL` in
 `src/sbo/constants/compatibility_algorithms.py`.
+
+## Benchmark Problems
+
+The benchmark problems in `src/sbo/benchmarks/` are not components: they have no settings and no base class to derive
+from. Each problem is one module with a plain function per fidelity and one `MultiFidelityFunction` instance, a frozen
+dataclass that checks its fields when it is created (see `benchmarks/base.py`). `forrester.py` is the complete example.
+To add a problem:
+
+1. Write a function per fidelity that takes points with shape `(n, n_dim)` or one point `(n_dim,)`, converts them with
+    `as_2d(x, N_DIM)`, and returns the values with shape `(n,)`. Give the formula (in LaTeX, see
+    [Documentation](../index.md#documentation)) and the paper in the docstring, and write the formulas from the paper,
+    not from another implementation (licences).
+2. Create the `MultiFidelityFunction` with a lower-case `name` without spaces, the functions from high to low fidelity,
+    the bounds and, if known, `x_opt` and `f_opt`.
+3. Add it to `ALL_BENCHMARKS` and `__all__` in `src/sbo/benchmarks/__init__.py`, which also makes it available through
+    `get_benchmark(name)`.
+4. Add `tests/tests_unittest/test_benchmarks/test_<name>.py` with reference values, like `test_forrester.py`.
+    `test_all_benchmarks_are_consistent` checks every problem in `ALL_BENCHMARKS` automatically: a unique name, the
+    output shapes, and that the highest fidelity at `x_opt` gives `f_opt`.
+
+A user's own problem doesn't have to be a `MultiFidelityFunction`: `Config.from_json` takes a class whose instances have
+`functions`, `l_bound` and `u_bound`, the interface described by the `FunctionSet` protocol.
