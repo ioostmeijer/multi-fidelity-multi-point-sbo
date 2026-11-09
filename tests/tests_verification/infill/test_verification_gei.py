@@ -85,6 +85,7 @@ def test_gei_matches_quadrature(krg_fixture: Generator, xi: int, g: int) -> None
     x = X_TEST[xi]
     got = _get_GEI_infill(config, krg, x, g, f_min)
     yhat, s = krg.predict(x, return_variance=True)
+    yhat, s = float(np.ravel(yhat)[0]), float(np.ravel(s)[0])
     ref = gei_quadrature(yhat, math.sqrt(s), f_min, g)
     assert np.isclose(got, ref, rtol=1e-5, atol=1e-4), (
         f"GEI and quadrature are not equal: GEI: {got}, quadrature {ref}\n"
