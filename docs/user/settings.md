@@ -97,5 +97,5 @@ sample found: the surrogate optimum also changes when new samples change the mod
 surrogate models (their own `seed` setting is set to `random_seed`), and `config.rng`, which is used for every other
 random choice. Two runs with the same problem, settings and seed therefore give the same result.
 
-The thesis results were produced with the locked environment (`uv sync --locked --no-dev --extra benchmarks`); other
-package versions can give slightly different numbers.
+The thesis results were produced with version 1.0.0 (tag `v1.0.0`) and its locked environment
+(`uv sync --locked --no-dev --extra benchmarks`); other package versions can give slightly different numbers.

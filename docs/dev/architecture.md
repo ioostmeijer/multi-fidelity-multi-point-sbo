@@ -5,18 +5,19 @@ This page explains how the parts of the package work together. The classes thems
 
 ## Package Layout
 
-| Path                             | Contents                                                                               |
-| -------------------------------- | -------------------------------------------------------------------------------------- |
-| `sbo/SBO.py`                     | `SBO`: creates the components, provides the initial samples, runs and plots.           |
-| `sbo/utils/Config.py`            | `Config`: the problem definition and settings (singleton).                             |
-| `sbo/utils/validate_settings.py` | Checks user settings against the default settings.                                     |
-| `sbo/utils/Logger.py`            | `setup_logger` and `get_logger`.                                                       |
-| `sbo/utils/Base.py`              | `Base`: stores the config; base class of every component.                              |
-| `sbo/surrogate/`                 | Surrogate models, all derived from `SurrogateBase` (`surrogate/Base.py`).              |
-| `sbo/infill/`                    | Infill strategies, all derived from `InfillBase` (`infill/Base.py`).                   |
-| `sbo/optimisation/`              | Optimisation algorithms, all derived from `OptimisationBase` (`optimisation/Base.py`). |
-| `sbo/DefaultSettings/`           | The default settings of every component, one `*_DEFAULT_SETTINGS` dict each.           |
-| `sbo/constants/`                 | Constants, e.g. the infill strategies that support expensive constraints.              |
+| Path                             | Contents                                                                                    |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| `sbo/SBO.py`                     | `SBO`: creates the components, provides the initial samples, runs and plots.                |
+| `sbo/utils/Config.py`            | `Config`: the problem definition and settings (singleton).                                  |
+| `sbo/utils/validate_settings.py` | Checks user settings against the default settings.                                          |
+| `sbo/utils/Logger.py`            | `setup_logger` and `get_logger`.                                                            |
+| `sbo/utils/Base.py`              | `Base`: stores the config; base class of every component.                                   |
+| `sbo/surrogate/`                 | Surrogate models, all derived from `SurrogateBase` (`surrogate/Base.py`).                   |
+| `sbo/infill/`                    | Infill strategies, all derived from `InfillBase` (`infill/Base.py`).                        |
+| `sbo/optimisation/`              | Optimisation algorithms, all derived from `OptimisationBase` (`optimisation/Base.py`).      |
+| `sbo/DefaultSettings/`           | The default settings of every component, one `*_DEFAULT_SETTINGS` dict each.                |
+| `sbo/constants/`                 | Constants, e.g. the infill strategies that support expensive constraints.                   |
+| `sbo/benchmarks/`                | Multi-fidelity benchmark problems, one `MultiFidelityFunction` each (`benchmarks/base.py`). |
 
 ## Components
 

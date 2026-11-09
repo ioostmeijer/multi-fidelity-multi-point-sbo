@@ -1,8 +1,8 @@
 import pytest
 from logger_helper import _make_logger
-from mf2 import forrester
 
 from sbo import SBO, Config
+from sbo.benchmarks import FORRESTER
 
 # Absolute tolerance on the final optimum found by the end-to-end tests
 RESULT_TOLERANCE = 1e-2
@@ -31,14 +31,14 @@ def template_for_e2e_test(
     :return: None
     """
     if single_fid:
-        functions = [forrester.functions[0]]
+        functions = [FORRESTER.functions[0]]
     else:
-        functions = forrester.functions
+        functions = FORRESTER.functions
 
     config = Config(
         used_algorithms=used_algorithms,
-        lb=forrester.l_bound,
-        ub=forrester.u_bound,
+        lb=FORRESTER.l_bound,
+        ub=FORRESTER.u_bound,
         functions=functions,
         settings=settings,
         logger=_make_logger(),
@@ -75,8 +75,8 @@ def _check_optimum(found_optimum: dict) -> None:
     )
 
     # Known optimum of the high-fidelity Forrester function (x ~ 0.757, f ~ -6.021)
-    coord_expected = forrester.x_opt
-    func_expected = float(forrester.functions[0](coord_expected.reshape(1, -1))[0])
+    coord_expected = FORRESTER.x_opt
+    func_expected = float(FORRESTER.functions[0](coord_expected.reshape(1, -1))[0])
 
     # Absolute tolerance for the final optimum (value and coordinates)
     assert abs(found_optimum["value"] - func_expected) < RESULT_TOLERANCE, (

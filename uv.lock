@@ -656,18 +656,6 @@ wheels = [
 ]
 
 [[package]]
-name = "mf2"
-version = "2022.6.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/8c/97/49e6d2f793d547a5acc5deed3e2e74a8ee4b2702884a06b681615c57aa1b/mf2-2022.6.0.tar.gz", hash = "sha256:6edab8cf9b10379a6c9b5201a1cae60a23ed997be5e168b5bc32423d087e4f37", size = 38811, upload-time = "2022-06-08T17:09:30.04Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/17/55/dabb101c8cf25c4b0aa178a3dda7ffd3e9423daada79abd28a9278c801f7/mf2-2022.6.0-py3-none-any.whl", hash = "sha256:54b2364cb3f0a792f697baf47d8a7b3354f0088e2cdadef124883adb2016a3bc", size = 41409, upload-time = "2022-06-08T17:09:28.47Z" },
-]
-
-[[package]]
 name = "mkdocs"
 version = "1.6.1"
 source = { registry = "https://pypi.org/simple" }
@@ -875,11 +863,6 @@ dependencies = [
     { name = "smt" },
 ]
 
-[package.optional-dependencies]
-benchmarks = [
-    { name = "mf2" },
-]
-
 [package.dev-dependencies]
 dev = [
     { name = "black" },
@@ -895,7 +878,6 @@ dev = [
     { name = "mdformat" },
     { name = "mdformat-mkdocs" },
     { name = "mdformat-tables" },
-    { name = "mf2" },
     { name = "mkdocs-gen-files" },
     { name = "mkdocs-literate-nav" },
     { name = "mkdocs-material" },
@@ -933,7 +915,6 @@ lint = [
 ]
 test = [
     { name = "coverage" },
-    { name = "mf2" },
     { name = "mockmpi" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -944,7 +925,6 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "matplotlib" },
-    { name = "mf2", marker = "extra == 'benchmarks'" },
     { name = "mpi4py" },
     { name = "numpy" },
     { name = "scipy" },
@@ -968,7 +948,6 @@ dev = [
     { name = "mdformat" },
     { name = "mdformat-mkdocs" },
     { name = "mdformat-tables" },
-    { name = "mf2" },
     { name = "mkdocs-gen-files" },
     { name = "mkdocs-literate-nav" },
     { name = "mkdocs-material" },
@@ -1006,7 +985,6 @@ lint = [
 ]
 test = [
     { name = "coverage" },
-    { name = "mf2" },
     { name = "mockmpi" },
     { name = "pytest" },
     { name = "pytest-cov" },

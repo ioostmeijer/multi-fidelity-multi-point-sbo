@@ -8,14 +8,32 @@ from .Base import InfillBase
 
 
 class GEI(InfillBase):
-    """Generalised Expected Improvement (GEI) infill strategy.
+    r"""Generalised Expected Improvement (GEI) infill strategy.
 
     This infill strategy selects new points to sample based on the Generalised Expected
     Improvement criterion, which extends the traditional Expected Improvement by
     allowing for a parameter 'g' that adjusts the balance between exploration and
     exploitation. The point selected maximises the generalised expected improvement over
-    the current
-    best-known value.
+    the current best-known value:
+
+    $$
+    \mathrm{GEI}_g(x) = \hat{s}(x)^g \sum_{k=0}^{g} (-1)^k \binom{g}{k} u^{g-k} T_k,
+    \qquad u = \frac{y_{\min} - \hat{y}(x)}{\hat{s}(x)}
+    $$
+
+    with the terms $T_k$ calculated recursively:
+
+    $$
+    T_0 = \Phi(u), \qquad T_1 = -\phi(u), \qquad
+    T_k = -u^{k-1} \phi(u) + (k - 1) \, T_{k-2} \quad \text{for } k \ge 2
+    $$
+
+    Here $\hat{y}(x)$ and $\hat{s}^2(x)$ are the predicted mean and variance of the
+    surrogate, $y_{\min}$ is the optimum of the surrogate (not the best sample), and
+    $\Phi$ and $\phi$ are the cumulative distribution and probability density functions
+    of the standard normal distribution. $g = 0$ gives the probability of improvement
+    $\Phi(u)$, and $g = 1$ the Expected Improvement; a higher $g$ gives more global
+    exploration.
     """
 
     def __init__(self, *args, **kwargs) -> None:
@@ -104,7 +122,10 @@ class GEI(InfillBase):
         fidelity: int = 0,
         **kwargs,
     ) -> float:
-        """Calculate the Generalised Expected Improvement (GEI) value at a given point.
+        r"""Calculate the Generalised Expected Improvement (GEI) value at a given point.
+
+        The GEI is calculated with the formulas in the class docstring. If no point in
+        `x` has variance ($\hat{s}(x) \le 10^{-12}$), the GEI is 0.
 
         Parameters
         ----------

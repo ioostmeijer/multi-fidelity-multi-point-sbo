@@ -6,13 +6,26 @@ from .GEI import GEI
 
 
 class FilteredGEI(GEI):
-    """Filtered Generalised Expected Improvement infill strategy.
+    r"""Filtered Generalised Expected Improvement infill strategy.
 
     Implements a filtered version of the Generalised Expected Improvement (GEI)
     infill strategy for multi-fidelity optimisation introduced in [1].
     This strategy selects new points to sample based on the GEI criterion, while also
     determining the appropriate fidelity level (high-fidelity or low-fidelity) for
     each point based on a calculated threshold.
+
+    The sample location $x$ maximises the GEI (see `GEI`). The point is sampled at the
+    high fidelity if the prediction there is below the threshold $T(x)$, and at the low
+    fidelity otherwise:
+
+    $$
+    l(x) = \begin{cases}
+        0 \text{ (HF)} & \text{if } \hat{y}(x) < T(x) \\
+        1 \text{ (LF)} & \text{otherwise}
+    \end{cases}
+    $$
+
+    The threshold is calculated in `_calc_threshold`.
 
     Notes
     -----
@@ -158,7 +171,29 @@ class FilteredGEI(GEI):
         best_value: float | None = None,
         samples_per_iteration: None | dict[int, list[float]] = None,
     ) -> np.ndarray:
-        """Calculate the threshold value for fidelity selection at point x.
+        r"""Calculate the threshold value for fidelity selection at point x.
+
+        The threshold is a weighted average of the optimum $y_{\min}$ and the mean
+        $\bar{y}_h$ of the high-fidelity samples:
+
+        $$
+        T(x) = \omega(x) \, y_{\min} + \left(1 - \omega(x)\right) \bar{y}_h,
+        \qquad \omega(x) = \frac{1}{1 + \sqrt{\hat{s}^2(x) / \hat{s}_l^2(x)}}
+        $$
+
+        with $\hat{s}^2(x)$ the variance of the co-Kriging discrepancy model and
+        $\hat{s}_l^2(x)$ the variance of the low-fidelity model ($\hat{s}_l^2$ is
+        clipped to at least $10^{-12}$). With `samples_per_iteration` (the HF values
+        $y_{h,i,j}$, $j = 1, \dots, n_i$, sampled in iteration $i = 0, \dots, t - 1$),
+        the mean is calculated per iteration:
+
+        $$
+        \bar{y}_h = \frac{1}{t + 1} \sum_{i=0}^{t-1} \frac{1}{n_i}
+            \sum_{j=1}^{n_i} y_{h,i,j}
+        $$
+
+        Without it, $\bar{y}_h$ is the mean of all HF samples. Not verified against
+        [1] yet.
 
         Parameters
         ----------

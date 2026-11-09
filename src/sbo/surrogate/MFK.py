@@ -5,12 +5,21 @@ from .Base import SurrogateBaseWithVariance
 
 
 class MFK(SurrogateBaseWithVariance):
-    """Multi-Fidelity Kriging (MFK) surrogate model.
+    r"""Multi-Fidelity Kriging (MFK) surrogate model.
 
     This class wraps around the SMT MFK model, providing functionality to
     initialise, train, and predict using the MFK model. It inherits from the
     SurrogateBaseWithVariance class and implements the necessary methods for
     training and prediction.
+
+    SMT's MFK is a recursive co-Kriging model: each fidelity $l$ is the prediction of
+    the next lower fidelity, scaled, plus a Kriging model of the difference:
+
+    $$
+    \hat{y}_l(x) = \rho_l(x) \, \hat{y}_{l+1}(x) + \hat{\delta}_l(x)
+    $$
+
+    with the scaling $\rho_l(x)$ a regression (the `rho_regr` setting).
 
     The fidelity argument of predict_values and predict_variance selects the level:
     fidelity 0 is the HF level, fidelity n_fidelities - 1 the lowest. SMT orders its

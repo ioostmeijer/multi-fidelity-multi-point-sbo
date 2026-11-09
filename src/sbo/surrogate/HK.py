@@ -9,7 +9,7 @@ from .Base import SurrogateBaseWithVariancePerFidelity
 
 
 class HK(SurrogateBaseWithVariancePerFidelity):
-    """Hierarchical Kriging (HK) surrogate model for multi-fidelity.
+    r"""Hierarchical Kriging (HK) surrogate model for multi-fidelity.
 
     This surrogate model implements the Hierarchical Kriging approach for
     multi-fidelity surrogate modelling. It builds a hierarchy of Kriging models,
@@ -17,8 +17,29 @@ class HK(SurrogateBaseWithVariancePerFidelity):
     build upon the lower fidelity models.
     The implemented method was introduced by Han and Görtz [1].
 
+    Each fidelity $l$ above the lowest one (fidelity 0 is the HF) uses the prediction
+    of the next lower fidelity $\hat{y}_{l+1}$ as its trend, scaled by $\beta_0$:
+
+    $$
+    \hat{y}_l(x) = \beta_0 \, \hat{y}_{l+1}(x)
+        + \mathbf{r}(x)^\top \mathbf{R}^{-1} (\mathbf{y} - \beta_0 \mathbf{F})
+    $$
+
+    with $\mathbf{y}$ the $n$ samples of fidelity $l$, $\mathbf{F}$ the prediction
+    $\hat{y}_{l+1}$ at these samples, $\mathbf{R}$ their correlation matrix and
+    $\mathbf{r}(x)$ the correlations between $x$ and the samples. The scaling factor
+    and the process variance follow from generalised least squares:
+
+    $$
+    \beta_0 = \left(\mathbf{F}^\top \mathbf{R}^{-1} \mathbf{F}\right)^{-1}
+        \mathbf{F}^\top \mathbf{R}^{-1} \mathbf{y},
+    \qquad
+    \hat{\sigma}^2 = \frac{1}{n} (\mathbf{y} - \beta_0 \mathbf{F})^\top
+        \mathbf{R}^{-1} (\mathbf{y} - \beta_0 \mathbf{F})
+    $$
+
     With a cubic spline or Gaussian exponential correlation function by Lophaven et al.
-    [2].
+    [2] (see `_vectorised_correlation`).
 
     Raises
     ------
@@ -102,11 +123,20 @@ class HK(SurrogateBaseWithVariancePerFidelity):
         return model
 
     def train(self) -> None:
-        """Train the HK surrogate model using the provided training data.
+        r"""Train the HK surrogate model using the provided training data.
 
         The lowest fidelity model is trained first, followed by higher fidelity models.
         The training process involves optimising hyperparameters using differential
         evolution and calculating necessary matrices for predictions.
+
+        The hyperparameters $\boldsymbol{\theta}$ maximise the log-likelihood (see
+        `_log_likelihood_hk`), searched in $\ln \boldsymbol{\theta}$ within the
+        `theta_bounds` setting. The matrices are computed with the Cholesky
+        decomposition $\mathbf{R} = \mathbf{C} \mathbf{C}^\top$ and the QR
+        decomposition $\mathbf{C}^{-1} \mathbf{F} = \mathbf{Q} \mathbf{G}$, so that
+        $\beta_0 = \mathbf{G}^{-1} \mathbf{Q}^\top \mathbf{C}^{-1} \mathbf{y}$, and
+        $\boldsymbol{\gamma} = \mathbf{R}^{-1} (\mathbf{y} - \beta_0 \mathbf{F})$ is
+        stored for the mean prediction.
 
         Raises
         ------
@@ -326,7 +356,16 @@ class HK(SurrogateBaseWithVariancePerFidelity):
         return self._predict_mean(x, fidelity=fidelity)
 
     def _predict_mean(self, x: np.ndarray, fidelity: int = 0) -> np.ndarray:
-        """Calculate the mean prediction at a given fidelity.
+        r"""Calculate the mean prediction at a given fidelity.
+
+        The lowest fidelity is predicted by its SMT KRG model; every higher fidelity
+        recursively as
+
+        $$
+        \hat{y}_l(x) = \beta_0 \, \hat{y}_{l+1}(x)
+            + \mathbf{r}(x)^\top \boldsymbol{\gamma},
+        \qquad \boldsymbol{\gamma} = \mathbf{R}^{-1} (\mathbf{y} - \beta_0 \mathbf{F})
+        $$
 
         Parameters
         ----------
@@ -410,7 +449,21 @@ class HK(SurrogateBaseWithVariancePerFidelity):
         return self._predict_variance(x, fidelity=fidelity)
 
     def _predict_variance(self, x: np.ndarray, fidelity: int = 0) -> np.ndarray:
-        """Calculate the variance prediction at a given fidelity.
+        r"""Calculate the variance prediction at a given fidelity.
+
+        The lowest fidelity is predicted by its SMT KRG model; every higher fidelity
+        as (Han and Görtz [1] in the class docstring)
+
+        $$
+        \hat{s}_l^2(x) = \hat{\sigma}^2 \left[ 1 - \mathbf{r}^\top \mathbf{R}^{-1}
+            \mathbf{r} + \mathbf{a}^\top \left(\mathbf{F}^\top \mathbf{R}^{-1}
+            \mathbf{F}\right)^{-1} \mathbf{a} \right],
+        \qquad \mathbf{a} = \mathbf{F}^\top \mathbf{R}^{-1} \mathbf{r}
+            - \hat{y}_{l+1}(x)
+        $$
+
+        with $\mathbf{r} = \mathbf{r}(x)$. Small negative values from rounding errors
+        are set to 0.
 
         Parameters
         ----------
@@ -473,7 +526,17 @@ class HK(SurrogateBaseWithVariancePerFidelity):
     def _log_likelihood_hk(
         self, theta: np.ndarray, n: int, fidelity: int
     ) -> float | None:
-        """Calculate the log-likelihood for the HK model at a given fidelity.
+        r"""Calculate the log-likelihood for the HK model at a given fidelity.
+
+        The concentrated log-likelihood, without constant terms and multiplied by 2:
+
+        $$
+        \ln L(\boldsymbol{\theta}) = -n \ln \hat{\sigma}^2(\boldsymbol{\theta})
+            - \ln \lvert \mathbf{R}(\boldsymbol{\theta}) \rvert
+        $$
+
+        with $\ln \lvert \mathbf{R} \rvert = 2 \sum_i \ln C_{ii}$ from the Cholesky
+        factor $\mathbf{C}$.
 
         Parameters
         ----------
@@ -582,7 +645,28 @@ class HK(SurrogateBaseWithVariancePerFidelity):
     def _vectorised_correlation(
         self, x1: np.ndarray, x2: np.ndarray, theta: np.ndarray
     ) -> np.ndarray:
-        """Calculate the correlation matrix or vector between two sets of points.
+        r"""Calculate the correlation matrix or vector between two sets of points.
+
+        The correlation between two points $x$ and $x'$ with $d$ dimensions, set by the
+        `corr` setting. For `squar_exp` ($p = 2$) and `pow_exp` ($p$ = `pow_exp_power`):
+
+        $$
+        R(x, x') = \exp\left(-\sum_{k=1}^{d} \theta_k \lvert x_k - x'_k \rvert^p\right)
+        $$
+
+        For `cubic_spline`, with $\xi_k = \theta_k \lvert x_k - x'_k \rvert$:
+
+        $$
+        R(x, x') = \prod_{k=1}^{d} \zeta(\xi_k), \qquad
+        \zeta(\xi) = \begin{cases}
+            1 - 15 \xi^2 + 30 \xi^3 & \text{for } 0 \le \xi \le 0.2 \\
+            1.25 (1 - \xi)^3 & \text{for } 0.2 < \xi < 1 \\
+            0 & \text{for } \xi \ge 1
+        \end{cases}
+        $$
+
+        For the correlation matrix of a set of points with itself, the `nugget` is
+        added to the diagonal.
 
         Parameters
         ----------

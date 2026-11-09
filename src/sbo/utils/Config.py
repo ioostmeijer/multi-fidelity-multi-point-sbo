@@ -1,12 +1,15 @@
 import functools
 import importlib
+import inspect
 import json
 import logging
+import warnings
 from typing import Any, Callable, ClassVar, Optional
 
 import numpy as np
 from scipy.optimize import NonlinearConstraint
 
+from ..benchmarks import get_benchmark
 from ..constants import EXPENSIVE_CONSTRAINT_COMPATIBLE_INFILL
 from .Logger import delete_logger, get_logger
 from .validate_settings import validate_settings
@@ -1140,6 +1143,20 @@ class Config:
     def from_json(cls: "Config", input_settings: str | dict) -> "Config":
         """Create the singleton instance from a JSON file.
 
+        The functions are set by the "functions" entry, with a "module" and an
+        "attribute":
+
+        - "module": "sbo.benchmarks": the attribute is the name of a benchmark problem
+            (case and spaces don't matter, e.g. "forrester" or "FORRESTER"), see
+            `sbo.benchmarks.get_benchmark`;
+        - "module": "mf2": deprecated, gives a DeprecationWarning and uses the
+            benchmark problem of the same name from `sbo.benchmarks` (mf2 itself is
+            not needed);
+        - any other module: the attribute is a class, which is instantiated without
+            arguments, or an object such as a `MultiFidelityFunction` instance. Either
+            must have `functions`, `l_bound` and `u_bound` (see
+            `sbo.benchmarks.FunctionSet`).
+
         Parameters
         ----------
         input_settings
@@ -1153,7 +1170,7 @@ class Config:
         Raises
         ------
         ValueError
-            If n_fidelities is 0 or negative.
+            If n_fidelities is 0 or negative, or the benchmark problem does not exist.
         """
         if isinstance(input_settings, dict):
             input_dict = input_settings
@@ -1163,29 +1180,10 @@ class Config:
                 input_dict = json.load(f)
         resulting_config_dict = input_dict.copy()
 
-        # import the function
-        module_name = input_dict["functions"]["module"]
-        try:
-            function_module = importlib.import_module(module_name)
-        except ModuleNotFoundError as e:
-            msg = f"Could not import the function module '{module_name}': {e}."
-            if module_name == "mf2":
-                msg += (
-                    " mf2 is an optional dependency; install it with "
-                    'pip install "multi-fidelity-multi-point-sbo[benchmarks]".'
-                )
-            get_logger().error(msg)
-            raise ModuleNotFoundError(msg) from e
-
-        if input_dict["functions"]["module"] == "mf2":
-            function_set = getattr(
-                function_module,
-                input_dict["functions"]["attribute"].lower().replace(" ", "_"),
-            )
-        else:
-            function_set = getattr(
-                function_module, input_dict["functions"]["attribute"]
-            )()
+        # Get the functions
+        function_set = cls._load_function_set(
+            input_dict["functions"]["module"], input_dict["functions"]["attribute"]
+        )
 
         n_functions = input_dict["functions"].get("n_fidelities", None)
 
@@ -1244,6 +1242,71 @@ class Config:
             (resulting_config_dict.get("logger") or get_logger()).warning(clamp_msg)
 
         return cls(**resulting_config_dict)
+
+    @staticmethod
+    def _import_function_module(module_name: str) -> object:
+        """Import the module that holds the functions.
+
+        Parameters
+        ----------
+        module_name
+            The name of the module.
+
+        Returns
+        -------
+        object
+            The imported module.
+
+        Raises
+        ------
+        ModuleNotFoundError
+            If the module can not be imported.
+        """
+        try:
+            return importlib.import_module(module_name)
+        except ModuleNotFoundError as e:
+            msg = f"Could not import the function module '{module_name}': {e}."
+            get_logger().error(msg)
+            raise ModuleNotFoundError(msg) from e
+
+    @classmethod
+    def _load_function_set(
+        cls: "type[Config]", module_name: str, attribute: str
+    ) -> Any:  # noqa: ANN401
+        """Get the set of functions named in the "functions" entry of from_json.
+
+        Parameters
+        ----------
+        module_name
+            The "module" entry: "sbo.benchmarks", "mf2" (deprecated) or another module.
+        attribute
+            The "attribute" entry: the name of a benchmark problem, or of a class or
+            object in the module.
+
+        Returns
+        -------
+        Any
+            An object with `functions`, `l_bound` and `u_bound` (see
+            `sbo.benchmarks.FunctionSet`).
+        """
+        if module_name == "sbo.benchmarks":
+            return get_benchmark(attribute)
+
+        if module_name == "mf2":
+            # stacklevel=3: points at the code that called from_json
+            warnings.warn(
+                '"module": "mf2" is deprecated and will be removed in version 2.0.0; '
+                'use "module": "sbo.benchmarks" instead.',
+                DeprecationWarning,
+                stacklevel=3,
+            )
+            return get_benchmark(attribute)
+
+        function_module = cls._import_function_module(module_name)
+        function_set = getattr(function_module, attribute)
+        # A class is instantiated; an object (e.g. a MultiFidelityFunction instance)
+        # is used as it is
+        return function_set() if inspect.isclass(function_set) else function_set
 
     # Convert inexpensive constraints to scipy format
     @staticmethod

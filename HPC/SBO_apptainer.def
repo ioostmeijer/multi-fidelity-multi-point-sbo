@@ -44,7 +44,7 @@ From: python:3.10-slim
     UV_PYTHON=/usr/local/bin/python3.10 \
     UV_PYTHON_DOWNLOADS=never \
     UV_NO_CACHE=1 \
-    uv sync --locked --no-dev --extra benchmarks --no-install-project --no-binary-package mpi4py
+    uv sync --locked --no-dev --no-install-project --no-binary-package mpi4py
 
 %environment
     export OPAL_PREFIX=/host-mpi-root

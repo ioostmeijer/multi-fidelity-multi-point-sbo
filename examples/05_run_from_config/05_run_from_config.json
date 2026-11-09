@@ -6,7 +6,7 @@
     "optimisation": "EgoAsync"
   },
   "functions": {
-    "module": "mf2",
+    "module": "sbo.benchmarks",
     "attribute": "Forrester",
     "n_fidelities": 1
   },

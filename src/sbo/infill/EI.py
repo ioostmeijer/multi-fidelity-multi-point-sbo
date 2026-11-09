@@ -6,12 +6,23 @@ from .Base import InfillBase
 
 
 class EI(InfillBase):
-    """Expected Improvement (EI) infill strategy.
+    r"""Expected Improvement (EI) infill strategy.
 
     This infill strategy selects new points to sample based on the Expected Improvement
     criterion, which balances exploration and exploitation by considering both the
     predicted mean and uncertainty of the surrogate model. The point selected maximises
-    the expected improvement over the current best-known value.
+    the expected improvement over the current best-known value:
+
+    $$
+    \mathrm{EI}(x) = \left(y_{\min} - \hat{y}(x)\right) \Phi(z)
+        + \hat{s}(x) \, \phi(z),
+    \qquad z = \frac{y_{\min} - \hat{y}(x)}{\hat{s}(x)}
+    $$
+
+    with $\hat{y}(x)$ the predicted mean and $\hat{s}^2(x)$ the predicted variance of
+    the surrogate, $y_{\min}$ the best sampled value at the fidelity used, and $\Phi$
+    and $\phi$ the cumulative distribution and probability density functions of the
+    standard normal distribution.
     """
 
     def __init__(self, *args, **kwargs) -> None:
@@ -132,10 +143,15 @@ class EI(InfillBase):
         fidelity: int = 0,
         **kwargs,
     ) -> float:
-        """Calculate EI value. Accepts optional keyword-only `best_value`.
+        r"""Calculate EI value. Accepts optional keyword-only `best_value`.
 
         `best_value` can be provided by callers of EI; if not provided it can be
         obtained from `context`/`kwargs` or computed from the surrogate.
+
+        The EI is calculated with the formula in the class docstring. A point without
+        variance ($\hat{s}(x) \le 10^{-12}$) gets
+        $\mathrm{EI}(x) = \max\left(y_{\min} - \hat{y}(x), 0\right)$; if no point in
+        `x` has variance, the EI is 0.
 
         Parameters
         ----------

@@ -1,14 +1,16 @@
 import importlib
 import inspect
 import json
+import sys
+import warnings
 from pathlib import Path
 from typing import Callable
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
-from mf2 import forrester
 
+from sbo.benchmarks import FORRESTER
 from sbo.DefaultSettings import DEFAULT_SETTINGS
 from sbo.utils import Config
 
@@ -333,7 +335,7 @@ def test_config_from_json(tmp_path: Path) -> None:
             "optimisation": "EgoSequential",
             "surrogate": "KRG",
         },
-        "functions": {"module": "mf2", "attribute": "forrester"},
+        "functions": {"module": "sbo.benchmarks", "attribute": "forrester"},
         "settings": {
             "optimisation": {"max_iterations": 150},
             "additional": "value",
@@ -350,10 +352,10 @@ def test_config_from_json(tmp_path: Path) -> None:
         "optimisation": "EgoSequential",
         "surrogate": "KRG",
     }
-    assert config.lb == forrester.l_bound
-    assert config.ub == forrester.u_bound
-    assert len(config.functions) == len(forrester.functions)
-    for idx, func in enumerate(forrester.functions):
+    assert config.lb == FORRESTER.l_bound
+    assert config.ub == FORRESTER.u_bound
+    assert len(config.functions) == len(FORRESTER.functions)
+    for idx, func in enumerate(FORRESTER.functions):
         assert funcs_behave_equal(config.functions[idx], func)
     assert config._settings["optimisation"]["max_iterations"] == 150
     assert "additional" not in config._settings
@@ -387,7 +389,7 @@ def test_config_from_json_file(tmp_path: Path) -> None:
             "surrogate": "KRG",
         },
         "functions": {
-            "module": "mf2",
+            "module": "sbo.benchmarks",
             "attribute": "forrester",
         },
         "settings": {
@@ -406,10 +408,10 @@ def test_config_from_json_file(tmp_path: Path) -> None:
         "optimisation": "EgoSequential",
         "surrogate": "KRG",
     }
-    assert config.lb == forrester.l_bound
-    assert config.ub == forrester.u_bound
-    assert len(config.functions) == len(forrester.functions)
-    for idx, func in enumerate(forrester.functions):
+    assert config.lb == FORRESTER.l_bound
+    assert config.ub == FORRESTER.u_bound
+    assert len(config.functions) == len(FORRESTER.functions)
+    for idx, func in enumerate(FORRESTER.functions):
         assert funcs_behave_equal(config.functions[idx], func)
     assert config._settings["optimisation"]["max_iterations"] == 150
     assert "additional" not in config._settings
@@ -425,7 +427,7 @@ def test_config_from_json_dict(tmp_path: Path) -> None:
             "surrogate": "KRG",
         },
         "functions": {
-            "module": "mf2",
+            "module": "sbo.benchmarks",
             "attribute": "forrester",
         },
         "settings": {
@@ -441,10 +443,10 @@ def test_config_from_json_dict(tmp_path: Path) -> None:
         "optimisation": "EgoSequential",
         "surrogate": "KRG",
     }
-    assert config.lb == forrester.l_bound
-    assert config.ub == forrester.u_bound
-    assert len(config.functions) == len(forrester.functions)
-    for idx, func in enumerate(forrester.functions):
+    assert config.lb == FORRESTER.l_bound
+    assert config.ub == FORRESTER.u_bound
+    assert len(config.functions) == len(FORRESTER.functions)
+    for idx, func in enumerate(FORRESTER.functions):
         assert funcs_behave_equal(config.functions[idx], func)
     assert config._settings["optimisation"]["max_iterations"] == 150
     assert "additional" not in config._settings
@@ -554,10 +556,10 @@ def test_set_bounds_moves_whole_domain() -> None:
 
 
 @pytest.mark.unit
-def test_from_json_without_mf2_gives_install_hint(
+def test_from_json_mf2_uses_sbo_benchmarks_with_deprecation_warning(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Test that a missing mf2 gives a ModuleNotFoundError with the install hint."""
+    """Test that "module": "mf2" warns and uses sbo.benchmarks, also without mf2."""
     real_import = importlib.import_module
 
     def fake_import_module(name: str, *args, **kwargs) -> object:
@@ -567,15 +569,132 @@ def test_from_json_without_mf2_gives_install_hint(
 
     monkeypatch.setattr(importlib, "import_module", fake_import_module)
 
-    with pytest.raises(
-        ModuleNotFoundError, match=r"multi-fidelity-multi-point-sbo\[benchmarks\]"
+    with pytest.warns(DeprecationWarning, match='"module": "sbo.benchmarks"'):
+        config = Config.from_json(
+            {
+                "used_algorithms": {"surrogate": "KRG", "infill": "EI"},
+                "functions": {"module": "mf2", "attribute": "Forrester"},
+            }
+        )
+
+    assert len(config.functions) == len(FORRESTER.functions)
+    for idx, func in enumerate(FORRESTER.functions):
+        assert funcs_behave_equal(config.functions[idx], func)
+    assert list(config.lb) == list(FORRESTER.l_bound)
+    assert list(config.ub) == list(FORRESTER.u_bound)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("attribute", ["FORRESTER", "forrester", "Forrester"])
+def test_from_json_sbo_benchmarks(attribute: str) -> None:
+    """Test that "module": "sbo.benchmarks" finds a problem by name, without warning."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        config = Config.from_json(
+            {
+                "used_algorithms": {"surrogate": "KRG", "infill": "EI"},
+                "functions": {"module": "sbo.benchmarks", "attribute": attribute},
+            }
+        )
+
+    assert len(config.functions) == len(FORRESTER.functions)
+    for idx, func in enumerate(FORRESTER.functions):
+        assert funcs_behave_equal(config.functions[idx], func)
+    assert list(config.lb) == list(FORRESTER.l_bound)
+    assert list(config.ub) == list(FORRESTER.u_bound)
+
+
+@pytest.mark.unit
+def test_from_json_sbo_benchmarks_unknown_name() -> None:
+    """Test that an unknown benchmark name gives a ValueError."""
+    with pytest.raises(ValueError, match="Unknown benchmark"):
+        Config.from_json(
+            {
+                "used_algorithms": {"surrogate": "KRG", "infill": "EI"},
+                "functions": {"module": "sbo.benchmarks", "attribute": "unknown"},
+            }
+        )
+
+
+@pytest.mark.unit
+def test_from_json_mf2_unknown_name() -> None:
+    """Test that "module": "mf2" with an unknown name gives a ValueError.
+
+    There is no fallback to mf2 itself, so mf2 is never imported.
+    """
+    with (
+        pytest.warns(DeprecationWarning, match="mf2"),
+        pytest.raises(ValueError, match="Unknown benchmark"),
     ):
         Config.from_json(
             {
                 "used_algorithms": {"surrogate": "KRG", "infill": "EI"},
-                "functions": {"module": "mf2", "attribute": "forrester"},
+                "functions": {"module": "mf2", "attribute": "unknown"},
             }
         )
+
+
+@pytest.mark.unit
+def test_from_json_unknown_module() -> None:
+    """Test that a module that can't be imported gives a ModuleNotFoundError."""
+    with pytest.raises(ModuleNotFoundError, match="Could not import the function"):
+        Config.from_json(
+            {
+                "used_algorithms": {"surrogate": "KRG", "infill": "EI"},
+                "functions": {"module": "no_such_module_for_sbo", "attribute": "X"},
+            }
+        )
+
+
+@pytest.mark.unit
+def test_from_json_other_module_with_instance() -> None:
+    """Test that an object (not a class) in another module is used as it is."""
+    config = Config.from_json(
+        {
+            "used_algorithms": {"surrogate": "KRG", "infill": "EI"},
+            "functions": {
+                "module": "sbo.benchmarks.forrester",
+                "attribute": "FORRESTER",
+                "n_fidelities": 1,
+            },
+        }
+    )
+
+    assert len(config.functions) == 1
+    assert funcs_behave_equal(config.functions[0], FORRESTER.functions[0])
+
+
+@pytest.mark.unit
+def test_from_json_other_module_with_class(tmp_path: Path) -> None:
+    """Test that a class in another module is instantiated."""
+    module_file = tmp_path / "my_functions_for_from_json.py"
+    module_file.write_text(
+        "import numpy as np\n"
+        "\n"
+        "\n"
+        "class MyFunctions:\n"
+        "    def __init__(self):\n"
+        "        self.functions = [lambda x: np.sum(x**2)]\n"
+        "        self.l_bound = np.array([0.0])\n"
+        "        self.u_bound = np.array([2.0])\n"
+    )
+    sys.path.insert(0, str(tmp_path))
+    try:
+        config = Config.from_json(
+            {
+                "used_algorithms": {"surrogate": "KRG", "infill": "EI"},
+                "functions": {
+                    "module": "my_functions_for_from_json",
+                    "attribute": "MyFunctions",
+                },
+            }
+        )
+    finally:
+        sys.path.remove(str(tmp_path))
+        sys.modules.pop("my_functions_for_from_json", None)
+
+    assert len(config.functions) == 1
+    assert list(config.ub) == [2.0]
 
 
 @pytest.mark.unit

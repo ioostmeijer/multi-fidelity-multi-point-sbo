@@ -86,8 +86,8 @@ The image is written to `HPC/SBO_apptainer.sif`. Rebuild it whenever `uv.lock` c
 
 ### How the Image Is Built
 
-The image installs exactly the runtime dependencies pinned in `uv.lock`, plus the `benchmarks` extra (mf2), without
-test, docs or development tools, so it matches the environment of the thesis runs.
+The image installs exactly the runtime dependencies pinned in `uv.lock`, without test, docs or development tools, so it
+matches the locked environment.
 
 `mpi4py` is the exception: it is built from source inside the container against the **host's** OpenMPI, so MPI
 communication goes through the cluster's own (interconnect-aware) MPI library. `build_apptainer.sh` therefore:
@@ -99,5 +99,5 @@ communication goes through the cluster's own (interconnect-aware) MPI library. `
 
 !!! note "Licence of the image"
 
-    The built image contains GPL-licensed software (mf2 and the Linux base system). The definition file itself is part of
-    this MIT-licensed repository; if you publish a built image, the GPL terms apply to it.
+    The built image contains GPL-licensed software (the Linux base system). The definition file itself is part of this
+    MIT-licensed repository; if you publish a built image, the GPL terms apply to it.

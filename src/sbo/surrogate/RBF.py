@@ -5,12 +5,24 @@ from .Base import SurrogateBase
 
 
 class RBF(SurrogateBase):
-    """Radial Basis Function (RBF) surrogate model.
+    r"""Radial Basis Function (RBF) surrogate model.
 
     This class wraps around the SMT RBF model, providing functionality to
     initialise, train, and predict using the RBF model. It inherits from the
     SurrogateBase class and implements the necessary methods for training and
     prediction.
+
+    The prediction is a weighted sum of Gaussian basis functions centred at the $n$
+    high-fidelity samples $x_i$, plus an optional polynomial $p(x)$ (the
+    `poly_degree` setting):
+
+    $$
+    \hat{y}(x) = \sum_{i=1}^{n} w_i
+        \exp\left(-\frac{\lVert x - x_i \rVert^2}{d_0^2}\right) + p(x)
+    $$
+
+    with $d_0$ the `d0` setting. The weights $w_i$ are fitted to the samples, with
+    the `reg` setting as regularisation.
     """
 
     def __init__(self, *args, **kwargs) -> None:

@@ -40,8 +40,10 @@ problem. Create a new `SBO` after the new `Config`, or call `Config.destroy_inst
 
 ## `ModuleNotFoundError: No module named 'mf2'`
 
-`Config.from_json` and example 05 use the mf2 benchmark functions, an optional dependency. Install them with
-`pip install "multi-fidelity-multi-point-sbo[benchmarks]"` (or `uv sync --extra benchmarks`).
+The benchmark problems are part of the package (`sbo.benchmarks`), so mf2 is no longer needed. Code that imports mf2
+itself still needs it: replace, for example, `from mf2 import forrester` with `from sbo.benchmarks import FORRESTER`
+(the problem names are lower case, e.g. `FORRESTER.name == "forrester"`). In a JSON file for `Config.from_json`, use
+`"module": "sbo.benchmarks"`; `"module": "mf2"` still works without mf2, with a `DeprecationWarning`.
 
 ## `ValueError: Not all ub > lb.`
 

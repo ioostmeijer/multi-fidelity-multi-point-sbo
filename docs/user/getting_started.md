@@ -10,17 +10,19 @@
 ## Installation
 
 ```bash
-pip install -e .                  # the package and its runtime dependencies
-pip install -e ".[benchmarks]"    # also the mf2 benchmark functions (for Config.from_json and example 05)
+pip install -e .    # the package, its runtime dependencies and the benchmark problems
 ```
 
-The benchmark functions from [mf2](https://mf2.readthedocs.io/) are optional.
+The benchmark problems (`sbo.benchmarks`) are part of the package.
 
-To reproduce the thesis results, install the exact, locked environment with [uv](https://docs.astral.sh/uv/):
+To install the exact, locked environment with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv sync --locked --no-dev --extra benchmarks   # runtime dependencies and mf2, at the locked versions
+uv sync --locked --no-dev   # runtime dependencies at the locked versions
 ```
+
+The thesis results were produced with version 1.0.0 (tag `v1.0.0`), which still used the benchmark functions from mf2.
+To reproduce them exactly, check out that tag and run `uv sync --locked --no-dev --extra benchmarks`.
 
 To run on a cluster, see [Running on HPC](hpc.md).
 

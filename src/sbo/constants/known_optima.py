@@ -1,16 +1,46 @@
-"""The known optima for the functions included."""
+"""The known optima of the benchmark problems (deprecated).
 
-# MF2 known optima
-MF2_KNOWN_OPTIMA = {
-    "forrester": -6.0207400557670825,
-    "bohachevsky": 0.0,
-    "booth": 0.0,
-    "branin": -333.91603435227887,
-    "currin": 13.798722044728434,
-    "himmelblau": 0.0,
-    "six_hump_camelback": -1.0316284229280819,
-    "park91a": 2.718281828459045e-08,
-    "park91b": 0.6666666666666666,
-    "hartmann6": -3.0424576600692044,
-    "borehole": 7.819676328755232,
-}
+The known optimum of every benchmark problem is now its ``f_opt`` attribute, see
+``sbo.benchmarks``. ``MF2_KNOWN_OPTIMA`` is kept until version 2.0.0, built from those.
+"""
+
+import warnings
+
+from ..benchmarks import ALL_BENCHMARKS
+
+
+def _deprecated(name: str, stacklevel: int) -> dict:
+    """Return the deprecated constant ``name``, with a DeprecationWarning.
+
+    Parameters
+    ----------
+    name
+        The name of the attribute.
+    stacklevel
+        The stack level of the warning, so it points at the code that used the name.
+
+    Returns
+    -------
+    dict
+        The known optimum (``f_opt``) of every benchmark problem, keyed by its name,
+        for the deprecated name MF2_KNOWN_OPTIMA.
+
+    Raises
+    ------
+    AttributeError
+        For any other name.
+    """
+    if name == "MF2_KNOWN_OPTIMA":
+        warnings.warn(
+            "MF2_KNOWN_OPTIMA is deprecated and will be removed in version 2.0.0; "
+            "use the f_opt attribute of the problems in sbo.benchmarks instead.",
+            DeprecationWarning,
+            stacklevel=stacklevel + 1,
+        )
+        return {benchmark.name: benchmark.f_opt for benchmark in ALL_BENCHMARKS}
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __getattr__(name: str) -> dict:
+    """Return a deprecated constant (module ``__getattr__``, PEP 562)."""
+    return _deprecated(name, stacklevel=2)
