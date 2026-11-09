@@ -32,6 +32,47 @@ there:
 SBO_TEST_PLOT_DIR=verification_plots pytest tests/tests_verification/surrogate   # plots in verification_plots/KRG and /RBF
 ```
 
+## Deprecation Warnings
+
+`filterwarnings` in `[tool.pytest.ini_options]` (`pyproject.toml`) turns a `DeprecationWarning` or `FutureWarning` that
+is raised from `sbo` code into an error, so a deprecated call in the own code fails the tests. The same warnings from
+other packages (smt, matplotlib, ...) raised in their own code don't, so a new Python or dependency version doesn't
+block the tests. A test that checks a deprecation of `sbo` itself catches the warning with `pytest.warns`.
+
+## Python Versions
+
+The package supports Python 3.11 to 3.14 (`requires-python = ">=3.11,<3.15"`). The CI tests:
+
+| Workflow       | Jobs                                                                                   | Python versions        |
+| -------------- | -------------------------------------------------------------------------------------- | ---------------------- |
+| `ci.yml`       | Unit tests on Linux and Windows (MPI unit tests on Linux)                              | 3.11, 3.12, 3.13, 3.14 |
+| `extended.yml` | Verification and end-to-end tests on Linux and Windows                                 | 3.11 and 3.14          |
+| `extended.yml` | MPI verification, MPI end-to-end tests and coverage (Linux)                            | 3.14                   |
+| `lint.yml`     | pre-commit; `docs.yml`: building the docs; `ci.yml`: deptry (once, on Linux with 3.14) | 3.14                   |
+
+The development environment (`.venv`) uses the version in `.python-version`. To test another version locally without
+replacing `.venv`, create one environment per version (`.venv-*` is in `.gitignore`). Testing the lowest and the highest
+version is enough; the CI covers the versions in between. In Git Bash:
+
+```bash
+for v in 3.11 3.14; do
+  UV_PROJECT_ENVIRONMENT=.venv-$v uv sync --locked --python $v
+  .venv-$v/Scripts/python.exe -m pytest -m unit -n auto -q
+done
+
+# The slow and the MPI tests on one version
+.venv-3.14/Scripts/python.exe -m pytest -m verification -n auto -q
+mpiexec -n 2 .venv-3.14/Scripts/python.exe -m pytest --with-mpi -p no:xdist -m "(mpi or mock_mpi) and unit"
+```
+
+On Linux and macOS, the interpreter is `.venv-$v/bin/python` instead.
+
+!!! note "Precision limits"
+
+    Some unit tests compare to `rel=1e-9` or `1e-12`, and the Kriging tests compare with SMT to `rtol=1e-5`. A newer NumPy
+    or SciPy can change the last digits. If a test fails on only one version, look at the size of the difference before
+    loosening a limit: a large difference means the results really changed.
+
 ## Helpers
 
 `tests/helpers/` is on the Python path of the tests (`pythonpath` in `pyproject.toml`):
