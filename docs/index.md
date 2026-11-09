@@ -126,4 +126,4 @@ APA and BibTeX (generated from `CITATION.cff`).
 
 ## Licence
 
-MIT. The optional `benchmarks` extra (mf2) is licensed under the GPLv3.
+MIT.

@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
-from mf2 import forrester as function_class
 
 from sbo import SBO, Config
+from sbo.benchmarks import FORRESTER as function_class
 
 
 @pytest.mark.verification

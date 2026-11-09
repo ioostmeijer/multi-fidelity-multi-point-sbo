@@ -20,9 +20,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Benchmark functions (mf2, GPLv3) used by Config.from_json, the examples and the thesis
-# runs. Optional, so the core package has no GPL dependency: pip install "multi-fidelity-multi-point-sbo[benchmarks]"
-benchmarks = ["mf2"]
+# Deprecated and empty: the benchmark functions are now part of the package
+# (sbo.benchmarks). Kept until version 2.0.0, so that existing install commands such as
+# pip install "multi-fidelity-multi-point-sbo[benchmarks]" keep working.
+benchmarks = []
 
 [dependency-groups]
 # Development-only dependencies (PEP 735). Not installed by `pip install multi-fidelity-multi-point-sbo`.
@@ -30,7 +31,6 @@ benchmarks = ["mf2"]
 
 # Lean test requirements for running the test suite
 test = [
-    "mf2",
     "pytest",
     "pytest-cov",
     "pytest-xdist",
@@ -130,8 +130,9 @@ exclude_lines = [
 known_first_party = ["sbo"]
 
 [tool.deptry.per_rule_ignores]
-# mf2 is imported dynamically (importlib) by Config.from_json, so deptry can't see it
-DEP002 = ["setuptools", "mf2"]
+# setuptools is not imported: the <81 pin only keeps an installed mf2 working (it imports
+# pkg_resources) while "module": "mf2" is still supported; removed in version 2.0.0
+DEP002 = ["setuptools"]
 
 [tool.uv]
 # Constrains a transitive dependency without adding it: pymdown-extensions 12 breaks mkdocstrings' highlighter.

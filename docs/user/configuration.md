@@ -132,9 +132,9 @@ model is built during the optimisation.
 ## Loading from a JSON File
 
 A problem can also be defined in a JSON file and loaded with `Config.from_json`, which accepts a path or an already
-loaded dict. The functions are imported by module and attribute name, and the bounds are taken from the function class.
-This is mainly used with the benchmark functions from [mf2](https://mf2.readthedocs.io/), an optional dependency (GPLv3)
-installed with `pip install "multi-fidelity-multi-point-sbo[benchmarks]"`.
+loaded dict. The functions are given by module and attribute name, and the bounds are taken from the function set. This
+is mainly used with the benchmark problems in `sbo.benchmarks`, which are part of the package: Forrester, Bohachevsky,
+Booth, Branin, Currin, Himmelblau, six-hump camelback, Park91a, Park91b, Hartmann6 and borehole.
 
 ```json
 --8<-- "examples/05_run_from_config/05_run_from_config.json"
@@ -144,18 +144,23 @@ installed with `pip install "multi-fidelity-multi-point-sbo[benchmarks]"`.
 --8<-- "examples/05_run_from_config/05_run_from_config.py"
 ```
 
-| Key                                       | Meaning                                                                                                                                                     |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `used_algorithms`                         | As in `Config`.                                                                                                                                             |
-| `functions.module`, `functions.attribute` | Module and class of the function set, e.g. `mf2` and `Forrester`. The class must provide `functions` (HF to LF), `l_bound` and `u_bound`.                   |
-| `functions.n_fidelities`                  | Optional: use only the first `n` fidelity levels. All available fidelities are used, if a larger number of fidelities is specified and a warning is logged. |
-| `settings`                                | As in `Config`.                                                                                                                                             |
-| `name`                                    | Optional problem name.                                                                                                                                      |
-| `logger_name`, `logger`                   | Optional: the name of the logger to create, and a dict of `setup_logger` arguments (e.g. `{"to_file": false}`).                                             |
+| Key                                       | Meaning                                                                                                                                                                                                                                 |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `used_algorithms`                         | As in `Config`.                                                                                                                                                                                                                         |
+| `functions.module`, `functions.attribute` | `sbo.benchmarks` and the name of a benchmark problem (case and spaces don't matter, e.g. `Forrester`), or another module and a class or object in it. The class or object must provide `functions` (HF to LF), `l_bound` and `u_bound`. |
+| `functions.n_fidelities`                  | Optional: use only the first `n` fidelity levels. All available fidelities are used, if a larger number of fidelities is specified and a warning is logged.                                                                             |
+| `settings`                                | As in `Config`.                                                                                                                                                                                                                         |
+| `name`                                    | Optional problem name.                                                                                                                                                                                                                  |
+| `logger_name`, `logger`                   | Optional: the name of the logger to create, and a dict of `setup_logger` arguments (e.g. `{"to_file": false}`).                                                                                                                         |
 
 `from_json` imports only the module named in `functions.module`. If the module can't be imported, `from_json` raises a
-`ModuleNotFoundError`; for `mf2`, the message includes the install command
-(`pip install "multi-fidelity-multi-point-sbo[benchmarks]"`).
+`ModuleNotFoundError`. An unknown benchmark name gives a `ValueError` that lists the available problems.
+
+!!! note "Deprecated: the mf2 module"
+
+    JSON files written for version 1.0.0 use `"module": "mf2"`. They still work, also without mf2 installed: `from_json`
+    uses the problem of the same name from `sbo.benchmarks` and gives a `DeprecationWarning`. Change the module to
+    `"sbo.benchmarks"`; `"mf2"` will be removed in version 2.0.0.
 
 ## Config Is a Singleton
 

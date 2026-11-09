@@ -3,12 +3,12 @@ from typing import Generator
 import numpy as np
 import pytest
 from logger_helper import _make_logger
-from mf2 import forrester
 from smt.applications import EGO
 from smt.design_space import DesignSpace
 from smt.surrogate_models import KRG as SMT_KRG
 
 from sbo import Config
+from sbo.benchmarks import FORRESTER
 from sbo.infill import EI
 from sbo.surrogate import KRG
 
@@ -23,7 +23,7 @@ def fixture() -> Generator:
     Config.destroy_instance(destroy_logger=True)
 
     # Get the samples
-    y_train = forrester.functions[0](X_TRAIN)
+    y_train = FORRESTER.functions[0](X_TRAIN)
 
     # Get custom EI and krg
     config = Config(
@@ -32,9 +32,9 @@ def fixture() -> Generator:
             "infill": "EI",
             "optimisation": "EgoSequential",
         },
-        lb=forrester.l_bound,
-        ub=forrester.u_bound,
-        functions=[forrester.functions[0]],
+        lb=FORRESTER.l_bound,
+        ub=FORRESTER.u_bound,
+        functions=[FORRESTER.functions[0]],
         # Module fixture, set up before the test runs in its temporary directory:
         # use the test logger, so no log file is written to the current directory
         logger=_make_logger(),
@@ -58,10 +58,12 @@ def fixture() -> Generator:
         xdoe=X_TRAIN,
         ydoe=y_train,
         seed=config["random_seed"],
-        fun=forrester.functions[0],
+        fun=FORRESTER.functions[0],
         n_iter=1,
     )
-    smt_x_opt, smt_y_opt, _, smt_x_data, smt_y_data = smt_ego.optimize(forrester.high)
+    smt_x_opt, smt_y_opt, _, smt_x_data, smt_y_data = smt_ego.optimize(
+        FORRESTER.functions[0]
+    )
     smt_ego.gpr.set_training_values(X_TRAIN, y_train)
     smt_ego.gpr.train()
 

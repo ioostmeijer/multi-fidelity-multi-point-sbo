@@ -61,15 +61,17 @@ SP: single-point, Async: asynchronous multi-point, n: number of MPI processes).*
 Requires **Python 3.10**, and an MPI implementation (OpenMPI, MPICH or MS-MPI) for multi-point optimisation.
 
 ```bash
-pip install -e .                  # the package and its runtime dependencies
-pip install -e ".[benchmarks]"    # also the mf2 benchmark functions (for example 05 and used for generating the thesis results)
+pip install -e .    # the package, its runtime dependencies and the benchmark problems
 ```
 
-To reproduce the thesis results, install the exact, locked environment with [uv](https://docs.astral.sh/uv/):
+To install the exact, locked environment with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv sync --locked --no-dev --extra benchmarks
+uv sync --locked --no-dev
 ```
+
+The thesis results were produced with version 1.0.0 (tag `v1.0.0`), which still used the benchmark functions from mf2.
+To reproduce them exactly, check out that tag and run `uv sync --locked --no-dev --extra benchmarks`.
 
 ## Quickstart
 
@@ -151,8 +153,7 @@ If you use this code, please cite my thesis. GitHub's "Cite this repository" but
 
 ## Licence
 
-This project is licensed under the MIT License; see [`LICENSE`](LICENSE). The optional `benchmarks` extra (mf2) is
-licensed under the GPLv3.
+This project is licensed under the MIT License; see [`LICENSE`](LICENSE).
 
 ## References
 

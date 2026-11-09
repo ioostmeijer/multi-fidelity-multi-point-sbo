@@ -4,6 +4,33 @@ All notable changes to this project are listed in this file. The format is based
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `sbo.benchmarks`: the eleven benchmark problems of the thesis (Forrester, Bohachevsky, Booth, Branin, Currin,
+    Himmelblau, six-hump camelback, Park91a, Park91b, Hartmann6 and borehole) as part of the package. Each is a
+    `MultiFidelityFunction` with its functions per fidelity, bounds and known optimum (`x_opt`, `f_opt`); also
+    `ALL_BENCHMARKS`, `get_benchmark` and the `FunctionSet` protocol. They give the same values as mf2 2022.6.0.
+- `Config.from_json` accepts `"module": "sbo.benchmarks"`, and an object (such as a `MultiFidelityFunction`) as well as
+    a class as the attribute.
+- `BENCHMARK_FUNCTION_DELAY` in `sbo.constants`.
+
+### Deprecated
+
+- `"module": "mf2"` in `Config.from_json`: it now uses the problem of the same name from `sbo.benchmarks`, so mf2 is no
+    longer needed, and gives a `DeprecationWarning`.
+- `MF2_KNOWN_OPTIMA` (use the `f_opt` attribute of the benchmark problems) and `MF2_FUNCTION_DELAY` (use
+    `BENCHMARK_FUNCTION_DELAY`).
+- The `benchmarks` extra, which is now empty.
+
+All of these will be removed in version 2.0.0.
+
+### Removed
+
+- The dependency on mf2 (GPLv3): the `benchmarks` extra and the `test` group no longer install it, so the package and
+    its documentation no longer need GPL notes.
+
 ## [1.0.0] - 2026-11-07
 
 The first public release: the code of the MSc thesis
@@ -28,3 +55,4 @@ This is the code exactly as used for the thesis results; it is not actively deve
 - Documentation with MkDocs: user guide, developer guide and API reference.
 
 [1.0.0]: https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/releases/tag/v1.0.0
+[unreleased]: https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/compare/v1.0.0...HEAD

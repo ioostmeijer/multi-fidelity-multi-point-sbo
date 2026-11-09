@@ -1,7 +1,7 @@
 """Run an optimisation defined in a JSON config file.
 
-The JSON file uses a benchmark function from mf2, an optional dependency:
-pip install "multi-fidelity-multi-point-sbo[benchmarks]"
+The JSON file uses the Forrester function from sbo.benchmarks, the benchmark problems
+that are part of the package.
 """
 
 import json

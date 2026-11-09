@@ -4,11 +4,11 @@ from typing import Generator
 import numpy as np
 import pytest
 from logger_helper import _make_logger
-from mf2 import forrester
 from scipy.integrate import quad
 from scipy.stats import norm
 
 from sbo import Config
+from sbo.benchmarks import FORRESTER
 from sbo.infill import EI, GEI
 from sbo.surrogate import KRG
 
@@ -24,14 +24,14 @@ def krg_fixture() -> Generator:
     Config.destroy_instance(destroy_logger=True)
 
     # Get the training samples
-    y_train = forrester.functions[0](X_TRAIN)
+    y_train = FORRESTER.functions[0](X_TRAIN)
 
     # Get custom GEI and KRG
     config = Config(
         used_algorithms={"surrogate": "KRG", "infill": "GEI"},
-        lb=forrester.l_bound,
-        ub=forrester.u_bound,
-        functions=[forrester.functions[0]],
+        lb=FORRESTER.l_bound,
+        ub=FORRESTER.u_bound,
+        functions=[FORRESTER.functions[0]],
         # Module fixture, set up before the test runs in its temporary directory:
         # use the test logger, so no log file is written to the current directory
         logger=_make_logger(),

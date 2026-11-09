@@ -7,7 +7,7 @@ suites.
 ## Development Environment
 
 The environment is managed with [uv](https://docs.astral.sh/uv/). Install the full, locked development environment (the
-same one CI uses, including the test, docs and lint tools; the `test` group also installs mf2) and the pre-commit hooks:
+same one CI uses, including the test, docs and lint tools) and the pre-commit hooks:
 
 ```bash
 uv sync --locked                            # creates .venv with Python 3.10 and all dev dependencies
@@ -80,7 +80,8 @@ run in progress and starts a new one. They aren't run again on the merge commit.
 Dependencies are declared in `pyproject.toml`:
 
 - runtime dependencies under `[project] dependencies`;
-- the optional `benchmarks` extra (mf2) under `[project.optional-dependencies]`;
+- the `benchmarks` extra under `[project.optional-dependencies]`: deprecated and empty since the benchmark problems are
+    part of the package (`sbo.benchmarks`), kept until version 2.0.0 so existing install commands keep working;
 - the development-only `test`, `docs`, `lint` and `dev` groups under `[dependency-groups]` (`dev` includes `test`,
     `docs` and `lint`; `lint` holds the pre-commit hook tools).
 
@@ -101,11 +102,12 @@ sync.
 !!! warning "Licences of new dependencies"
 
     The package is MIT-licensed. A new runtime dependency must have a licence that allows this (MIT, BSD, Apache-2.0, PSF,
-    ...). A GPL-licensed package, like mf2, can only be an optional extra.
+    ...). A GPL-licensed package can only be an optional extra.
 
 `[tool.uv] constraint-dependencies` in `pyproject.toml` keeps `pymdown-extensions` below version 12, which is
-incompatible with the mkdocstrings version used for the API reference. `deptry` ignores `mf2` for the "unused
-dependency" rule, because it is only imported dynamically by `Config.from_json`.
+incompatible with the mkdocstrings version used for the API reference. `deptry` ignores `setuptools` for the "unused
+dependency" rule: nothing imports it, and its `<81` pin only keeps an installed mf2 working (mf2 imports
+`pkg_resources`) while `"module": "mf2"` is still supported in `Config.from_json`. Both go in version 2.0.0.
 
 To export the lock to a `requirements.txt` (e.g. for environments without uv):
 

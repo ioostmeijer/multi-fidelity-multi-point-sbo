@@ -1,34 +1,38 @@
 import numpy as np
 import pytest
 from logger_helper import _make_logger
-from mf2 import bi_fidelity_functions
 from smt.sampling_methods import LHS
 
 from sbo import Config
+from sbo.benchmarks import ALL_BENCHMARKS
 from sbo.infill import EI
 from sbo.optimisation import EgoSequential
 from sbo.surrogate import KRG
+
+SELECTED_BENCHMARKS = tuple(
+    b for b in ALL_BENCHMARKS if b.name not in ("hartmann6", "borehole")
+)
 
 
 @pytest.mark.verification
 def test_verification_ego_sequential() -> None:
     """Verify the implementation of EGO sequential strategy.
 
-    The idea is to test all functions given in mf2 with a KRG surrogate and EI infill
-    criterion. It is supposed that if the optimisation algorithm reaches a similar
-    optimum it is correctly implemented. The reference optima are calculated using SMT's
-    implementation of EGO with KRG and EI and a separate solution from `scipy.optimize`.
-    This also is based on the assumption that KRG and EI are correctly implemented. This
-    is tested in other unit and verification tests.
+    The idea is to test all benchmark problems in sbo.benchmarks with a KRG surrogate
+    and EI infill criterion. It is supposed that if the optimisation algorithm reaches
+    a similar optimum it is correctly implemented. The reference optima are calculated
+    using SMT's implementation of EGO with KRG and EI and a separate solution from
+    `scipy.optimize`. This also is based on the assumption that KRG and EI are
+    correctly implemented. This is tested in other unit and verification tests.
     """
     # Select all functions except Hartmann6 and Borehole. These functions are too
     # expensive to continuously be testing. The EGO sequential has been shown to be able
     # to solve these problems.
-    for selected_functions in bi_fidelity_functions[:-2]:
-        if selected_functions.name == "Currin":
+    for selected_functions in SELECTED_BENCHMARKS:
+        if selected_functions.name == "currin":
             function = (
                 lambda x, selected_functions=selected_functions: -1
-                * selected_functions[0](x)
+                * selected_functions.functions[0](x)
             )  # Maximisation problem noqa: E731
         else:
             function = selected_functions.functions[0]
