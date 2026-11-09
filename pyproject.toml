@@ -111,6 +111,10 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 norecursedirs = ["tests/helpers"]
+filterwarnings = [
+    "error::DeprecationWarning:sbo",
+    "error::FutureWarning:sbo",
+]
 markers = [
     "unit: fast, isolated unit tests",
     "verification: verification tests, slow",
