@@ -327,9 +327,11 @@ class OptimisationBase(Base):
             },
         }
 
+        criteria_values = {
+            k: v_dict["value"] for k, v_dict in stopping_criteria.items()
+        }
         self.config.logger.debug(
-            f"Stopping criteria values at iteration {iteration}: "
-            f"{ {k: v_dict['value'] for k, v_dict in stopping_criteria.items()} }"
+            f"Stopping criteria values at iteration {iteration}: {criteria_values}"
         )
 
         # Remove convergence criteria for which the threshold is None (not set)

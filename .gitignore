@@ -153,6 +153,8 @@ celerybeat.pid
 # Environments
 .env
 .venv
+# One environment per Python version for local tests (e.g. .venv-3.11, .venv-3.14)
+.venv-*/
 env/
 venv/
 ENV/

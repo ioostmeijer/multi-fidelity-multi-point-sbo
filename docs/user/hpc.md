@@ -4,7 +4,7 @@ Everything needed to run on a cluster is in the `HPC/` folder of the repository:
 
 | File                           | Purpose                                                                |
 | ------------------------------ | ---------------------------------------------------------------------- |
-| `HPC/SBO_apptainer.def`        | Apptainer definition: Python 3.10 and the locked runtime dependencies. |
+| `HPC/SBO_apptainer.def`        | Apptainer definition: Python 3.14 and the locked runtime dependencies. |
 | `HPC/build_apptainer.sh`       | Builds `HPC/SBO_apptainer.sif` against the cluster's OpenMPI module.   |
 | `HPC/example_SLURM_job.sbatch` | Minimal SLURM job that runs a script with MPI in the image.            |
 

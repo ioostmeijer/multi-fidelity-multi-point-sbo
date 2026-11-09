@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/actions/workflows/ci.yml)
 [![Docs](https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/actions/workflows/docs.yml/badge.svg?branch=main)](https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/)
-![python](https://img.shields.io/badge/python-3.10-blue)
+![python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -58,7 +58,7 @@ SP: single-point, Async: asynchronous multi-point, n: number of MPI processes).*
 
 ## Installation
 
-Requires **Python 3.10**, and an MPI implementation (OpenMPI, MPICH or MS-MPI) for multi-point optimisation.
+Requires **Python 3.11 to 3.14**, and an MPI implementation (OpenMPI, MPICH or MS-MPI) for multi-point optimisation.
 
 ```bash
 pip install -e .    # the package, its runtime dependencies and the benchmark problems
@@ -70,8 +70,9 @@ To install the exact, locked environment with [uv](https://docs.astral.sh/uv/):
 uv sync --locked --no-dev
 ```
 
-The thesis results were produced with version 1.0.0 (tag `v1.0.0`), which still used the benchmark functions from mf2.
-To reproduce them exactly, check out that tag and run `uv sync --locked --no-dev --extra benchmarks`.
+The thesis results were produced with version 1.0.0 (tag `v1.0.0`) on Python 3.10, which still used the benchmark
+functions from mf2. To reproduce them exactly, check out that tag and run
+`uv sync --locked --no-dev --extra benchmarks`. Version 1.0.0 is also the last version for Python 3.10.
 
 ## Quickstart
 
