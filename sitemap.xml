@@ -2,266 +2,318 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/SUMMARY/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/constants_reference/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/settings_reference/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/SBO/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/__init__/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/ALLOWED_ENTRIES/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/COMMON/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/__init__/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/infill/FILTEREDGEI/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/infill/GEI/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/infill/TWOSTEP/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/infill/__init__/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/optimisation/COMMON/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/optimisation/EGO/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/optimisation/__init__/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/surrogate/HK/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/surrogate/KRIGING/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/surrogate/RBF/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/surrogate/SMT/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/DefaultSettings/surrogate/__init__/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
+    </url>
+    <url>
+         <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/benchmarks/__init__/</loc>
+         <lastmod>2026-11-10</lastmod>
+    </url>
+    <url>
+         <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/benchmarks/base/</loc>
+         <lastmod>2026-11-10</lastmod>
+    </url>
+    <url>
+         <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/benchmarks/bohachevsky/</loc>
+         <lastmod>2026-11-10</lastmod>
+    </url>
+    <url>
+         <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/benchmarks/booth/</loc>
+         <lastmod>2026-11-10</lastmod>
+    </url>
+    <url>
+         <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/benchmarks/borehole/</loc>
+         <lastmod>2026-11-10</lastmod>
+    </url>
+    <url>
+         <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/benchmarks/branin/</loc>
+         <lastmod>2026-11-10</lastmod>
+    </url>
+    <url>
+         <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/benchmarks/currin/</loc>
+         <lastmod>2026-11-10</lastmod>
+    </url>
+    <url>
+         <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/benchmarks/forrester/</loc>
+         <lastmod>2026-11-10</lastmod>
+    </url>
+    <url>
+         <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/benchmarks/hartmann6/</loc>
+         <lastmod>2026-11-10</lastmod>
+    </url>
+    <url>
+         <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/benchmarks/himmelblau/</loc>
+         <lastmod>2026-11-10</lastmod>
+    </url>
+    <url>
+         <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/benchmarks/park91a/</loc>
+         <lastmod>2026-11-10</lastmod>
+    </url>
+    <url>
+         <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/benchmarks/park91b/</loc>
+         <lastmod>2026-11-10</lastmod>
+    </url>
+    <url>
+         <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/benchmarks/six_hump_camelback/</loc>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/constants/__init__/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/constants/compatibility_algorithms/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/constants/function_delays/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/constants/known_optima/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/infill/Base/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/infill/CEI/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/infill/EI/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/infill/FilteredGEI/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/infill/GEI/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/infill/Random/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/infill/TwoStep/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/infill/__init__/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/optimisation/Base/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/optimisation/EgoAsync/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/optimisation/EgoMPI/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/optimisation/EgoSequential/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/optimisation/__init__/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/surrogate/Base/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/surrogate/CoKRG/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/surrogate/HK/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/surrogate/KRG/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/surrogate/MFK/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/surrogate/RBF/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/surrogate/__init__/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/utils/Base/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/utils/Config/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/utils/Logger/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/utils/__init__/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/api/sbo/utils/validate_settings/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/dev/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/dev/architecture/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/dev/testing/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/dev/extending/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/dev/extending/infill/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/dev/extending/optimisation/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/dev/extending/surrogate/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/user/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/user/configuration/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/user/getting_started/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/user/hpc/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/user/multi_fidelity/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/user/multi_point/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/user/results/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/user/settings/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
     <url>
          <loc>https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/user/troubleshooting/</loc>
-         <lastmod>2026-11-07</lastmod>
+         <lastmod>2026-11-10</lastmod>
     </url>
 </urlset>
