@@ -342,10 +342,13 @@ class SBO:
         if self.config.used_algorithms != self._backup_used_alg:
             self.update_used_algorithms(self.config.used_algorithms)
 
-        # For not rank==0 optimisation no points need to be processed.
+        # For not rank==0 optimisation no points need to be processed. Store the
+        # empty result, so `optimum` and `sbo()` also return {} on the workers and
+        # don't run the optimisation again.
         if MPI is not None and MPI.COMM_WORLD.Get_rank() != 0:
             self._optimisation(surrogate=self._surrogate, infill=self._infill)
-            return {}
+            self._optimum = {}
+            return self._optimum
 
         if (
             max(
@@ -798,17 +801,26 @@ class SBO:
                 for fid, points in k_samples.items():
                     if fid not in fid_samples_plot:
                         continue
+                    # Flatten the 1-element arrays, so matplotlib gets scalars
                     sample_points_plot = ax.scatter(
-                        [
-                            p["coord"]
-                            for p in points
-                            if not _contains_point(p, prev_iteration_added.get(fid, []))
-                        ],
-                        [
-                            p["value"]
-                            for p in points
-                            if not _contains_point(p, prev_iteration_added.get(fid, []))
-                        ],
+                        np.ravel(
+                            [
+                                p["coord"]
+                                for p in points
+                                if not _contains_point(
+                                    p, prev_iteration_added.get(fid, [])
+                                )
+                            ]
+                        ),
+                        np.ravel(
+                            [
+                                p["value"]
+                                for p in points
+                                if not _contains_point(
+                                    p, prev_iteration_added.get(fid, [])
+                                )
+                            ]
+                        ),
                         label=f"Samples (fid {fid})",
                         color="tab:orange",
                         marker=marker_fid[fid % len(marker_fid)],
@@ -821,8 +833,8 @@ class SBO:
                     if fid not in fid_samples_plot:
                         continue
                     new_points_plot = ax.scatter(
-                        [p["coord"] for p in points],
-                        [p["value"] for p in points],
+                        np.ravel([p["coord"] for p in points]),
+                        np.ravel([p["value"] for p in points]),
                         label=f"Samples from previous iterations (fid {fid})",
                         color="k",
                         marker=marker_fid[fid % len(marker_fid)],
@@ -834,7 +846,7 @@ class SBO:
                 if (k != n_iter - 1) or (k == n_iter - 1 and not last_iteration_end):
                     for fid, points in next_location_k.items():
                         next_sample_locations_plot = ax.vlines(
-                            [p["coord"] for p in points],
+                            np.ravel([p["coord"] for p in points]),
                             ymin=ax.get_ylim()[0],
                             ymax=ax.get_ylim()[1],
                             color="tab:red",
@@ -846,8 +858,8 @@ class SBO:
                 # Plot the optimum if last iteration
                 if k == n_iter - 1 and last_iteration_end:
                     optimum_plot = ax.scatter(
-                        best_sample["coord"],
-                        best_sample["value"],
+                        np.ravel(best_sample["coord"]),
+                        np.ravel(best_sample["value"]),
                         color="tab:purple",
                         label="Optimum found",
                         marker="*",

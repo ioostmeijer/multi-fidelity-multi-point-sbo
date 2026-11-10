@@ -2,12 +2,13 @@ from types import NoneType
 
 from .SMT import SMT_SURROGATE_DEFAULT_SETTINGS
 
-"""Default settings for the Radial Basis Function (RBF) surrogate model.
+r"""Default settings for the Radial Basis Function (RBF) surrogate model.
 
 Keys:
     - 'data_dir': str, Directory for loading / saving cached data; None means do not
         save or load (default: None)
-    - 'd0': float, basis function scaling parameter in exp(-d^2 / d0^2)
+    - 'd0': float, scaling $d_0$ of the basis functions $\exp(-d^2 / d_0^2)$, with $d$
+        the distance to a sample
         (default: 1.0, min: 0.0)
     - 'max_print_depth': int, maximum depth for printing
         (default: 5, min: 1)

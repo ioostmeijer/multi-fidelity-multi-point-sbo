@@ -8,9 +8,9 @@ Idea
 
 import numpy as np
 import pytest
-from mf2 import forrester
 
 from sbo import SBO, Config
+from sbo.benchmarks import FORRESTER
 from sbo.surrogate import SurrogateBaseWithVariancePerFidelity
 
 
@@ -71,7 +71,7 @@ def test_sample_location() -> None:
     evaluated samples: the optimiser replaces a proposal that duplicates an existing
     sample by a random point, which is not a choice of the infill strategy.
     """
-    domain_size = np.max(np.asarray(forrester.u_bound) - np.asarray(forrester.l_bound))
+    domain_size = np.max(np.asarray(FORRESTER.u_bound) - np.asarray(FORRESTER.l_bound))
     location_atol = 1e-3 * domain_size
 
     config = Config(
@@ -80,9 +80,9 @@ def test_sample_location() -> None:
             "surrogate": "HK",
             "infill": "TwoStep",
         },
-        lb=forrester.l_bound,
-        ub=forrester.u_bound,
-        functions=forrester.functions,
+        lb=FORRESTER.l_bound,
+        ub=FORRESTER.u_bound,
+        functions=FORRESTER.functions,
     )
     sbo = SBO(config)
     _ = sbo.optimum
@@ -102,7 +102,7 @@ def test_sample_location() -> None:
                 for p in fid_points
             ]
 
-    x_test = np.linspace(forrester.l_bound, forrester.u_bound, 1000)
+    x_test = np.linspace(FORRESTER.l_bound, FORRESTER.u_bound, 1000)
 
     def infill_results(sbo: SBO) -> dict:
         """Infill values on the grid and the proposed point for every iteration."""
@@ -130,9 +130,9 @@ def test_sample_location() -> None:
             "surrogate": "HK",
             "infill": "EI",
         },
-        lb=forrester.l_bound,
-        ub=forrester.u_bound,
-        functions=forrester.functions,
+        lb=FORRESTER.l_bound,
+        ub=FORRESTER.u_bound,
+        functions=FORRESTER.functions,
     )
     ei_results = infill_results(SBO(config))
 
@@ -195,9 +195,9 @@ def test_jsd_calculation() -> None:
             "surrogate": "HK",
             "infill": "TwoStep",
         },
-        lb=forrester.l_bound,
-        ub=forrester.u_bound,
-        functions=forrester.functions,
+        lb=FORRESTER.l_bound,
+        ub=FORRESTER.u_bound,
+        functions=FORRESTER.functions,
     )
     sbo = SBO(config)
 
@@ -239,9 +239,9 @@ def test_fidelity_calculation() -> None:
             "surrogate": "HK",
             "infill": "TwoStep",
         },
-        lb=forrester.l_bound,
-        ub=forrester.u_bound,
-        functions=forrester.functions,
+        lb=FORRESTER.l_bound,
+        ub=FORRESTER.u_bound,
+        functions=FORRESTER.functions,
     )
     sbo = SBO(config)
 

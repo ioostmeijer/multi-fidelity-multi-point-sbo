@@ -3,11 +3,11 @@ import os
 import numpy as np
 import pytest
 from logger_helper import _make_logger
-from mf2 import bi_fidelity_functions
 from smt.sampling_methods import LHS
 from smt.surrogate_models import RBF as SMT_RBF
 from surrogate_plotter import plot_1d, plot_2d
 
+from sbo.benchmarks import ALL_BENCHMARKS
 from sbo.surrogate import RBF
 from sbo.utils import Config
 
@@ -23,7 +23,7 @@ if PLOT_DIR:
 @pytest.mark.verification
 def test_validate_RBF() -> None:
     """Validate the RBF wrapper against the SMT implementation."""
-    for function in bi_fidelity_functions:
+    for function in ALL_BENCHMARKS:
         function_high = function.functions[0]
         config = Config(
             used_algorithms={"surrogate": "RBF"},

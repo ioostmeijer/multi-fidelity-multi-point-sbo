@@ -118,6 +118,46 @@ def test__get_accurate_enough_fidelities_handles_zero_variance() -> None:
 
 
 @pytest.mark.unit
+@pytest.mark.filterwarnings("error::DeprecationWarning")
+def test__get_accurate_enough_fidelities_handles_2d_predictions() -> None:
+    """Test that 2D predictions (n, 1), as SMT returns them, give no warning."""
+
+    class Dummy2DSurrogate(DummySurrogateWithVariancePerFidelity):
+        """A dummy surrogate that returns predictions with shape (n, 1)."""
+
+        def predict_values(self, x: np.ndarray, *args, **kwargs) -> np.ndarray:
+            """Predict the mean values at point x as a column vector."""
+            return super().predict_values(x).reshape(-1, 1)
+
+        def predict_variance_fidelity(
+            self, x: np.ndarray, *args, fidelity: int = 0, **kwargs
+        ) -> np.ndarray:
+            """Predict the variance at point x as a column vector."""
+            return (
+                super().predict_variance_fidelity(x, fidelity=fidelity).reshape(-1, 1)
+            )
+
+    config = Config(
+        used_algorithms={"infill": "TwoStep"},
+        lb=[0.0],
+        ub=[1.0],
+        functions=[lambda x: x**2, lambda x: x**2 + 1, lambda x: x**2 * 10],
+        settings={"infill": {"single_fid_infill": "EI"}},
+        logger=_make_logger(),
+    )
+    two_step = TwoStep(config=config)
+    surrogate = Dummy2DSurrogate(
+        config=config, var_per_fidelity={0: 0.01, 1: 0.05, 2: 1.0}
+    )
+
+    accurate = TwoStep._get_accurate_enough_fidelities(
+        two_step, np.array([0.5]), surrogate
+    )
+
+    assert accurate == [0, 1]
+
+
+@pytest.mark.unit
 def test_try_to_load_nonexistent_single_fid_infill() -> None:
     """Test that trying to load a non-existent single-fid infill raises ImportError."""
     bad_config = Config(

@@ -86,6 +86,9 @@ markdown_extensions:
   - attr_list
   - toc:
       permalink: true
+  # Formulas in the docs and in docstrings: $...$ inline, $$...$$ as a block (LaTeX), typeset by MathJax.
+  - pymdownx.arithmatex:
+      generic: true
 
 # Mermaid diagrams in the style of the draw.io diagrams in docs/assets. Mermaid is loaded here (instead of by Material)
 # so that javascripts/mermaid_style.js can add the colours to Material's Mermaid configuration.
@@ -94,6 +97,9 @@ extra_css:
 extra_javascript:
   - https://unpkg.com/mermaid@11.4.1/dist/mermaid.min.js
   - javascripts/mermaid_style.js
+  # MathJax for the formulas (pymdownx.arithmatex above); its configuration must be loaded first.
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3.2.2/es5/tex-mml-chtml.js
 
 nav:
   - Home: index.md

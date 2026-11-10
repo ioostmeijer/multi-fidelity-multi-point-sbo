@@ -1,8 +1,8 @@
 import pytest
 from logger_helper import _make_logger
-from mf2 import forrester
 
 from sbo import SBO, Config
+from sbo.benchmarks import FORRESTER
 
 # Absolute tolerance on the final optimum found by the end-to-end tests
 RESULT_TOLERANCE = 1e-2
@@ -31,14 +31,14 @@ def template_for_e2e_test(
     :return: None
     """
     if single_fid:
-        functions = [forrester.functions[0]]
+        functions = [FORRESTER.functions[0]]
     else:
-        functions = forrester.functions
+        functions = FORRESTER.functions
 
     config = Config(
         used_algorithms=used_algorithms,
-        lb=forrester.l_bound,
-        ub=forrester.u_bound,
+        lb=FORRESTER.l_bound,
+        ub=FORRESTER.u_bound,
         functions=functions,
         settings=settings,
         logger=_make_logger(),
@@ -51,10 +51,14 @@ def template_for_e2e_test(
         if mpi_comm is not None:
             mpi_comm.Barrier()
 
-        # Only the coordinator (rank 0) returns the optimum; the workers have no
-        # solution to check.
+        # Only the coordinator (rank 0) returns the optimum; the workers return an
+        # empty dict.
         if mpi_comm is None or mpi_comm.Get_rank() == 0:
             _check_optimum(found_optimum)
+        else:
+            assert (
+                found_optimum == {}
+            ), f"A worker rank should return an empty dict, got {found_optimum}."
     finally:
         # Always clean up and synchronise, also when an assertion fails: otherwise the
         # other ranks wait at the next collective call forever (deadlock).
@@ -75,8 +79,8 @@ def _check_optimum(found_optimum: dict) -> None:
     )
 
     # Known optimum of the high-fidelity Forrester function (x ~ 0.757, f ~ -6.021)
-    coord_expected = forrester.x_opt
-    func_expected = float(forrester.functions[0](coord_expected.reshape(1, -1))[0])
+    coord_expected = FORRESTER.x_opt
+    func_expected = float(FORRESTER.functions[0](coord_expected.reshape(1, -1))[0])
 
     # Absolute tolerance for the final optimum (value and coordinates)
     assert abs(found_optimum["value"] - func_expected) < RESULT_TOLERANCE, (

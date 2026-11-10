@@ -10,13 +10,25 @@ from .Base import InfillBase
 
 
 class TwoStep(InfillBase):
-    """Two-step infill strategy for multi-fidelity optimisation.
+    r"""Two-step infill strategy for multi-fidelity optimisation.
 
     This method utilises a two-step approach to determine the next sampling point:
-    1. Determine the sample location based on a single-fidelity infill strategy
+
+    1. Determine the sample location $x$ based on a single-fidelity infill strategy.
     2. Determine the cheapest accurate enough fidelity to sample at that location,
-    based on the Jensen-Shannon distance (JSD) between the high-fidelity (HF)
-    surrogate and each lower-fidelity surrogate at the selected location.
+        based on the Jensen-Shannon distance (JSD) between the high-fidelity (HF)
+        surrogate and each lower-fidelity surrogate at the selected location.
+
+    In step 2, the prediction of fidelity $l$ at $x$ is the normal distribution
+    $P_l = \mathcal{N}\left(\hat{y}_l(x), \hat{s}_l^2(x)\right)$, with $l = 0$ the HF.
+    The fidelity sampled is the cheapest one (highest index) that is close enough to
+    the HF prediction:
+
+    $$
+    l^* = \max \left\{ l : \mathrm{JSD}(P_0, P_l) < \tau \right\}
+    $$
+
+    with $\tau$ the `jsd_threshold` setting. The HF ($l = 0$) always qualifies.
 
     The method is introduced by Garbo et al. [1].
 
@@ -145,12 +157,28 @@ class TwoStep(InfillBase):
     def _get_accurate_enough_fidelities(
         self, x: np.ndarray, surrogate: SurrogateBaseWithVariancePerFidelity
     ) -> list[int]:
-        """Get the list of fidelities which are accurate enough based on the JSD.
+        r"""Get the list of fidelities which are accurate enough based on the JSD.
 
         This method computes the Jensen-Shannon distance (JSD) between the
         high-fidelity (HF) surrogate and each lower-fidelity surrogate at the
         selected location. It returns a list of fidelity levels that are considered
         accurate enough based on a predefined JSD threshold.
+
+        The two normal distributions $P_0$ (HF) and $P_l$ (fidelity $l$) are evaluated
+        at `num_jsd_points` points between
+        $\min_i \left(\hat{y}_i(x) - 3 \hat{s}_i(x)\right)$ and
+        $\max_i \left(\hat{y}_i(x) + 3 \hat{s}_i(x)\right)$, $i \in \{0, l\}$, and
+        normalised to sum to 1. The distance (base 2, so between 0 and 1) is
+
+        $$
+        \mathrm{JSD}(P_0, P_l) = \sqrt{\frac{1}{2} D_{\mathrm{KL}}(P_0 \parallel M)
+            + \frac{1}{2} D_{\mathrm{KL}}(P_l \parallel M)},
+        \qquad M = \frac{1}{2} (P_0 + P_l)
+        $$
+
+        with $D_{\mathrm{KL}}$ the Kullback-Leibler divergence. Fidelity $l$ is
+        accurate enough if $\mathrm{JSD}(P_0, P_l) < \tau$ (`jsd_threshold`). A zero
+        predicted variance is replaced by $10^{-10}$.
 
         Parameters
         ----------
@@ -171,8 +199,8 @@ class TwoStep(InfillBase):
         var_hf = surrogate.predict_variance_fidelity(x_row, fidelity=0)
 
         # Extract scalar values from arrays
-        mu_hf = float(np.atleast_1d(mu_hf)[0])
-        var_hf = float(np.atleast_1d(var_hf)[0])
+        mu_hf = float(np.ravel(mu_hf)[0])
+        var_hf = float(np.ravel(var_hf)[0])
 
         if var_hf == 0.0:
             var_hf = 1e-10  # Prevent division by zero
@@ -183,8 +211,8 @@ class TwoStep(InfillBase):
         for fid in range(1, self.config.num_fidelities):
             mu_fid = surrogate.predict_values(x_row, fidelity=fid)
             var_fid = surrogate.predict_variance_fidelity(x_row, fidelity=fid)
-            mu_fid = float(np.atleast_1d(mu_fid)[0])
-            var_fid = float(np.atleast_1d(var_fid)[0])
+            mu_fid = float(np.ravel(mu_fid)[0])
+            var_fid = float(np.ravel(var_fid)[0])
             if var_fid == 0.0:
                 var_fid = 1e-10  # Prevent division by zero
 

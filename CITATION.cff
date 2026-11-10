@@ -12,8 +12,8 @@ authors:
   - family-names: Oostmeijer
     given-names: Ids
     affiliation: "Delft University of Technology"
-version: 1.0.0
-date-released: "2026-11-07"
+version: 1.1.0
+date-released: "2026-11-10"
 license: MIT
 repository-code: "https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo"
 url: "https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/"

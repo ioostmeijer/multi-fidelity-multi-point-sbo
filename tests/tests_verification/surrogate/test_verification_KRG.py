@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from logger_helper import _make_logger
-from mf2 import bi_fidelity_functions
 from smt.sampling_methods import LHS
 from smt.surrogate_models import KRG as SMT_KRG
 
+from sbo.benchmarks import ALL_BENCHMARKS
 from sbo.surrogate import KRG
 from sbo.utils import Config
 
@@ -23,7 +23,7 @@ if PLOT_DIR:
 @pytest.mark.verification
 def test_validate_KRG() -> None:
     """Validate the KRG surrogate model against the SMT implementation."""
-    for function in bi_fidelity_functions:
+    for function in ALL_BENCHMARKS:
         function_high = function.functions[0]
         config = Config(
             used_algorithms={"surrogate": "KRG"},

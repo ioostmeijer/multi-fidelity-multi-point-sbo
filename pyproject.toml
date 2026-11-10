@@ -1,6 +1,6 @@
 [project]
 name = "multi-fidelity-multi-point-sbo"
-version = "1.0.0"
+version = "1.1.0"
 description = "Surrogate-based optimisation (SBO) with asynchronous multi-point and/or multi-fidelity infill strategies"
 readme = "README.md"
 license = "MIT"
@@ -9,7 +9,14 @@ authors = [
     {name = "Ids Oostmeijer"}
 ]
 keywords = ["surrogate-based optimisation", "multi-fidelity", "multi-point", "asynchronous", "parallel computing"]
-requires-python = "==3.10.*"
+requires-python = ">=3.11,<3.15"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
 dependencies = [
     "matplotlib",
     "numpy",
@@ -20,9 +27,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Benchmark functions (mf2, GPLv3) used by Config.from_json, the examples and the thesis
-# runs. Optional, so the core package has no GPL dependency: pip install "multi-fidelity-multi-point-sbo[benchmarks]"
-benchmarks = ["mf2"]
+# Deprecated and empty: the benchmark functions are now part of the package
+# (sbo.benchmarks). Kept until version 2.0.0, so that existing install commands such as
+# pip install "multi-fidelity-multi-point-sbo[benchmarks]" keep working.
+benchmarks = []
 
 [dependency-groups]
 # Development-only dependencies (PEP 735). Not installed by `pip install multi-fidelity-multi-point-sbo`.
@@ -30,7 +38,6 @@ benchmarks = ["mf2"]
 
 # Lean test requirements for running the test suite
 test = [
-    "mf2",
     "pytest",
     "pytest-cov",
     "pytest-xdist",
@@ -93,7 +100,7 @@ skip = ["venv", ".venv", "build", "dist"]
 
 [tool.black]
 line_length = 88
-target_version = ["py310"]
+target_version = ["py311", "py312", "py313", "py314"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -104,6 +111,10 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 norecursedirs = ["tests/helpers"]
+filterwarnings = [
+    "error::DeprecationWarning:sbo",
+    "error::FutureWarning:sbo",
+]
 markers = [
     "unit: fast, isolated unit tests",
     "verification: verification tests, slow",
@@ -130,8 +141,9 @@ exclude_lines = [
 known_first_party = ["sbo"]
 
 [tool.deptry.per_rule_ignores]
-# mf2 is imported dynamically (importlib) by Config.from_json, so deptry can't see it
-DEP002 = ["setuptools", "mf2"]
+# setuptools is not imported: the <81 pin only keeps an installed mf2 working (it imports
+# pkg_resources) while "module": "mf2" is still supported; removed in version 2.0.0
+DEP002 = ["setuptools"]
 
 [tool.uv]
 # Constrains a transitive dependency without adding it: pymdown-extensions 12 breaks mkdocstrings' highlighter.

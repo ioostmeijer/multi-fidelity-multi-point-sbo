@@ -23,7 +23,7 @@ jobs:
       - name: Set up environment
         uses: ./.github/actions/setup-env
         with:
-          python-version: "3.10"
+          python-version: "3.14"
 
       - run: mkdocs build --strict
         env:
@@ -44,7 +44,7 @@ jobs:
       - name: Set up environment
         uses: ./.github/actions/setup-env
         with:
-          python-version: "3.10"
+          python-version: "3.14"
 
       - name: Configure git identity
         run: |

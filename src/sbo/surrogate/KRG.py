@@ -5,12 +5,27 @@ from .Base import SurrogateBaseWithVariance
 
 
 class KRG(SurrogateBaseWithVariance):
-    """Kriging Regression (KRG) surrogate model.
+    r"""Kriging Regression (KRG) surrogate model.
 
     This class wraps around the SMT KRG model, providing functionality to
     initialise, train, and predict using the KRG model. It inherits from the
     SurrogateBaseWithVariance class and implements the necessary methods for
     training and prediction.
+
+    The prediction is a regression trend plus a correlation term fitted to the
+    high-fidelity samples $\mathbf{y}$:
+
+    $$
+    \hat{y}(x) = \mathbf{f}(x)^\top \boldsymbol{\beta}
+        + \mathbf{r}(x)^\top \mathbf{R}^{-1}
+        (\mathbf{y} - \mathbf{F} \boldsymbol{\beta})
+    $$
+
+    with $\mathbf{f}(x)$ the regression functions (the `poly` setting),
+    $\mathbf{F}$ these functions at the samples, $\boldsymbol{\beta}$ their
+    coefficients, $\mathbf{R}$ the correlation matrix of the samples (the `corr`
+    setting) and $\mathbf{r}(x)$ the correlations between $x$ and the samples. See
+    the SMT documentation for the variance.
     """
 
     def __init__(self, *args, **kwargs) -> None:
