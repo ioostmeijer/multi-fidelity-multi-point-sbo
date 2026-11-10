@@ -512,6 +512,63 @@ def test_sbo_optimum() -> None:
     }, "SBO call did not return the expected optimum from run method."
 
 
+class _WorkerComm:
+    """Stand-in for `MPI.COMM_WORLD` on a worker rank."""
+
+    @staticmethod
+    def Get_rank() -> int:
+        """Return a worker rank."""
+        return 1
+
+
+class _WorkerMPI:
+    """Stand-in for the `mpi4py.MPI` module, as seen on a worker rank."""
+
+    COMM_WORLD = _WorkerComm()
+
+
+@pytest.mark.unit
+def test_sbo_optimum_on_worker_rank(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Test that `run`, `optimum` and `sbo()` all return {} on a worker rank.
+
+    The optimisation must run only once: before the fix, `optimum` stayed None on the
+    workers, so `sbo()` returned None and every later call ran the optimisation again.
+    """
+    config = Config(
+        used_algorithms={
+            "infill": "Random",
+            "surrogate": "KRG",
+            "optimisation": "EgoSequential",
+        },
+        lb=[0.0],
+        ub=[1.0],
+        functions=[lambda x: x**2],
+        logger=_make_logger(),
+    )
+    sbo = SBO(config)
+
+    n_solve_calls = 0
+
+    def mock_solve(*args, **kwargs) -> dict:
+        """Count the calls; a worker's result is not used."""
+        nonlocal n_solve_calls
+        n_solve_calls += 1
+        return {"coord": [0.5], "value": [0.25], "fid": 0}
+
+    sbo._optimisation.solve = mock_solve
+
+    # SBO.run reads the rank from MPI.COMM_WORLD of the `sbo.SBO` module. Patch it
+    # after creating the instance, so the initial samples are made as on rank 0.
+    monkeypatch.setattr(importlib.import_module("sbo.SBO"), "MPI", _WorkerMPI)
+
+    assert sbo.run() == {}, "run did not return {} on a worker rank."
+    assert sbo.optimum == {}, "optimum did not return {} on a worker rank."
+    assert sbo() == {}, "SBO call did not return {} on a worker rank."
+    assert n_solve_calls == 1, (
+        f"The optimisation ran {n_solve_calls} times on a worker rank instead of once."
+    )
+
+
 @pytest.mark.unit
 def test_hk_single_fidelity_keeps_initial_samples() -> None:
     """Test that HK -> KRG on a single fidelity keeps the user's initial samples."""
