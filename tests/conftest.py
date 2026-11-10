@@ -2,10 +2,16 @@ import logging
 import pathlib
 import shutil
 
+import matplotlib
 import pytest
 
 from sbo.utils.Config import Config
 from sbo.utils.Logger import setup_logger
+
+# The tests only save plots to files, so use the non-interactive Agg backend. Otherwise
+# matplotlib picks the Tk backend on Windows, which needs a working Tcl installation and
+# fails now and then on the GitHub Windows runners ("Can't find a usable init.tcl").
+matplotlib.use("Agg")
 
 # Maps a path to the corresponding marker
 _MARKER_BY_DIR = {
