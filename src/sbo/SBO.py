@@ -342,10 +342,13 @@ class SBO:
         if self.config.used_algorithms != self._backup_used_alg:
             self.update_used_algorithms(self.config.used_algorithms)
 
-        # For not rank==0 optimisation no points need to be processed.
+        # For not rank==0 optimisation no points need to be processed. Store the
+        # empty result, so `optimum` and `sbo()` also return {} on the workers and
+        # don't run the optimisation again.
         if MPI is not None and MPI.COMM_WORLD.Get_rank() != 0:
             self._optimisation(surrogate=self._surrogate, infill=self._infill)
-            return {}
+            self._optimum = {}
+            return self._optimum
 
         if (
             max(
