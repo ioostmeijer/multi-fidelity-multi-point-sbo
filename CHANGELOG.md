@@ -4,7 +4,7 @@ All notable changes to this project are listed in this file. The format is based
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2026-11-10
 
 ### Added
 
@@ -15,6 +15,9 @@ All notable changes to this project are listed in this file. The format is based
 - `Config.from_json` accepts `"module": "sbo.benchmarks"`, and an object (such as a `MultiFidelityFunction`) as well as
     a class as the attribute.
 - `BENCHMARK_FUNCTION_DELAY` in `sbo.constants`.
+- Formulas in the API documentation (LaTeX, rendered with MathJax) for the benchmark problems, the infill strategies
+    `EI`, `GEI`, `TwoStep` and `FilteredGEI`, the surrogates `HK`, `KRG`, `MFK` and `RBF`, the optimisation base class
+    and the default settings.
 
 ### Changed
 
@@ -80,4 +83,4 @@ This is the code exactly as used for the thesis results; it is not actively deve
 - Documentation with MkDocs: user guide, developer guide and API reference.
 
 [1.0.0]: https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/releases/tag/v1.0.0
-[unreleased]: https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/compare/v1.0.0...HEAD
+[1.1.0]: https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/releases/tag/v1.1.0
