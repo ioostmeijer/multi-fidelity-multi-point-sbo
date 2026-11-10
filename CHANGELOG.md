@@ -40,6 +40,14 @@ All of these will be removed in version 2.0.0.
     its documentation no longer need GPL notes.
 - Support for Python 3.10. Use version 1.0.0, the version of the thesis results, on Python 3.10.
 
+### Fixed
+
+- NumPy `DeprecationWarning`s "Conversion of an array with ndim > 0 to a scalar", which newer NumPy versions turn into
+    errors: `TwoStep`, the surrogate base class and the 1D surrogate plots of `SBO` now convert the 2D predictions of
+    SMT to scalars explicitly.
+- `SBO.optimum` and `sbo()` now return an empty dict on MPI worker ranks, like `SBO.run()`. They returned `None`, and
+    every later call to `optimum` ran the optimisation again.
+
 ### Security
 
 - The updated locked dependencies fix the open Dependabot alerts, except those for setuptools (see below). Pillow 13.0.0
