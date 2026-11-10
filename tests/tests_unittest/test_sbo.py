@@ -564,9 +564,9 @@ def test_sbo_optimum_on_worker_rank(monkeypatch: pytest.MonkeyPatch) -> None:
     assert sbo.run() == {}, "run did not return {} on a worker rank."
     assert sbo.optimum == {}, "optimum did not return {} on a worker rank."
     assert sbo() == {}, "SBO call did not return {} on a worker rank."
-    assert n_solve_calls == 1, (
-        f"The optimisation ran {n_solve_calls} times on a worker rank instead of once."
-    )
+    assert (
+        n_solve_calls == 1
+    ), f"The optimisation ran {n_solve_calls} times on a worker rank instead of once."
 
 
 @pytest.mark.unit

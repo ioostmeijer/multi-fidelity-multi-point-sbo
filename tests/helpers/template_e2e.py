@@ -56,9 +56,9 @@ def template_for_e2e_test(
         if mpi_comm is None or mpi_comm.Get_rank() == 0:
             _check_optimum(found_optimum)
         else:
-            assert found_optimum == {}, (
-                f"A worker rank should return an empty dict, got {found_optimum}."
-            )
+            assert (
+                found_optimum == {}
+            ), f"A worker rank should return an empty dict, got {found_optimum}."
     finally:
         # Always clean up and synchronise, also when an assertion fails: otherwise the
         # other ranks wait at the next collective call forever (deadlock).
