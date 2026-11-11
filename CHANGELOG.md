@@ -11,6 +11,8 @@ All notable changes to this project are listed in this file. The format is based
 - Ruff replaces black, isort and flake8 (with its five plugins) for linting, import sorting and formatting, configured
     in `pyproject.toml`. The code is reformatted with Ruff, and the findings it reports that flake8 missed are fixed
     (`raise ... from`, `zip(..., strict=...)` and misplaced `noqa` comments).
+- A workflow (`project-in-dev.yml`) moves the issues linked in a merged pull request into `dev` (`Part of #N`) to **In
+    dev** on the project board.
 
 ## [1.1.0] - 2026-11-10
 
