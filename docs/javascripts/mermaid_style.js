@@ -14,6 +14,6 @@
     )
     .join("\n");
 
-  const initialize = mermaid.initialize.bind(mermaid);
-  mermaid.initialize = (config) => initialize({ ...config, themeCSS: (config.themeCSS || "") + css });
+  const mermaidInitialize = mermaid.initialize.bind(mermaid);
+  mermaid.initialize = (config) => mermaidInitialize({ ...config, themeCSS: (config.themeCSS || "") + css });
 })();
