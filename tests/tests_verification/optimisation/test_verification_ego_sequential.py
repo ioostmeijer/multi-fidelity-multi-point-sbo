@@ -30,10 +30,11 @@ def test_verification_ego_sequential() -> None:
     # to solve these problems.
     for selected_functions in SELECTED_BENCHMARKS:
         if selected_functions.name == "currin":
-            function = (
+            # Maximisation problem
+            function = (  # noqa: E731
                 lambda x, selected_functions=selected_functions: -1
                 * selected_functions.functions[0](x)
-            )  # Maximisation problem noqa: E731
+            )
         else:
             function = selected_functions.functions[0]
 

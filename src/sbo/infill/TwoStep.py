@@ -100,7 +100,7 @@ class TwoStep(InfillBase):
                 f"'{single_fid_name}': {e}"
             )
             self.config.logger.error(msg)
-            raise ImportError(msg)
+            raise ImportError(msg) from e
 
         # Warn if constraints in config
         # if self.config.equality_constraints or self.config.inequality_constraints:

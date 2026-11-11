@@ -4,25 +4,19 @@
 repos:
   - repo: local
     hooks:
-      - id: flake8
-        name: flake8
-        entry: uv run --no-sync flake8
-        language: system
-        types: [python]
-        require_serial: true
-
-      - id: black
-        name: black
-        entry: uv run --no-sync black
+      # Lint first (with fixes, e.g. import sorting), then format, as Ruff recommends.
+      - id: ruff-check
+        name: ruff check
+        entry: uv run --no-sync ruff check --fix --force-exclude
         language: system
         types_or: [python, pyi]
         require_serial: true
 
-      - id: isort
-        name: isort
-        entry: uv run --no-sync isort --filter-files
+      - id: ruff-format
+        name: ruff format
+        entry: uv run --no-sync ruff format --force-exclude
         language: system
-        types_or: [cython, pyi, python]
+        types_or: [python, pyi]
         require_serial: true
 
       # Markdown formatting: wrap at 120 characters, consistent lists and aligned tables.

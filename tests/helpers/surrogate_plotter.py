@@ -78,7 +78,7 @@ def plot_2d(
 
     fig, axs = plt.subplots(len(lines) // 2, 2)
 
-    for ax, line in zip(axs.flatten(), lines):
+    for ax, line in zip(axs.flatten(), lines, strict=False):
         _create_subplot(ax, fig, line)
 
     if title:

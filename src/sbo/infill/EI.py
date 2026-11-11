@@ -221,7 +221,7 @@ class EI(InfillBase):
                 raise ValueError(
                     "No samples found in surrogate model to determine best value for "
                     f"EI calculation. Exit with error: {e}"
-                )
+                ) from e
 
         mu, variance = surrogate(
             np.atleast_2d(x), return_variance=True, fidelity=fidelity

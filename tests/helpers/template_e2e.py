@@ -89,7 +89,7 @@ def _check_optimum(found_optimum: dict) -> None:
     )
     assert all(
         abs(a - b) < RESULT_TOLERANCE
-        for a, b in zip(found_optimum["coord"], coord_expected)
+        for a, b in zip(found_optimum["coord"], coord_expected, strict=True)
     ), (
         f"Found optimum coord {found_optimum['coord']} differs from "
         f"expected coord {coord_expected} by more than {RESULT_TOLERANCE}."

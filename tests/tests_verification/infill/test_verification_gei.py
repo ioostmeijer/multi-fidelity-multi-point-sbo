@@ -38,7 +38,10 @@ def krg_fixture() -> Generator:
     )
     krg = KRG(config)
     krg.set_training_data(
-        [{"coord": x, "value": y, "fid": 0} for x, y in zip(X_TRAIN, y_train)]
+        [
+            {"coord": x, "value": y, "fid": 0}
+            for x, y in zip(X_TRAIN, y_train, strict=True)
+        ]
     )
     krg.train()
     f_min = float(np.min(y_train))

@@ -905,7 +905,11 @@ class Config:
         )
 
     def get(
-        self, key: str, default: Any = None, *, strict: bool = True  # noqa: ANN401
+        self,
+        key: str,
+        default: Any = None,  # noqa: ANN401
+        *,
+        strict: bool = True,
     ) -> Any:  # noqa: ANN401
         """Get a setting value using dot notation.
 

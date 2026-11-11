@@ -1,11 +1,11 @@
 """Import all settings."""
 
 from .COMMON import DEFAULT_SETTINGS
-from .infill import *  # noqa F403
-from .optimisation import *  # noqa F403
-from .surrogate import *  # noqa F403
+from .infill import *  # noqa: F403
+from .optimisation import *  # noqa: F403
+from .surrogate import *  # noqa: F403
 
-__all__ = [  # noqa F405
+__all__ = [  # noqa: F405
     "DEFAULT_SETTINGS",
     "EGOASYNC_DEFAULT_SETTINGS",
     "EGOSEQUENTIAL_DEFAULT_SETTINGS",

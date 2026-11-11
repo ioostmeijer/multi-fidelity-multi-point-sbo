@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
-from dummy_surrogate import DummySurrogateWithVariance  # noqa F401
-from logger_helper import _find_log_file, _make_logger  # noqa F401
+from dummy_surrogate import DummySurrogateWithVariance  # noqa: F401
+from logger_helper import _find_log_file, _make_logger  # noqa: F401
 from scipy.stats import norm
 
 from sbo import Config

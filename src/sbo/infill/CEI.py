@@ -179,7 +179,7 @@ class CEI(EI):
                 raise ValueError(
                     "No samples found in surrogate model to determine best value for "
                     f"EI calculation. Exit with error: {e}"
-                )
+                ) from e
 
         # Get the EI values
         ei_value = super().calc_infill_value(

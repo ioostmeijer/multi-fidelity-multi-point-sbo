@@ -41,7 +41,10 @@ def fixture() -> Generator:
     )
     krg_custom = KRG(config)
     krg_custom.set_training_data(
-        [{"coord": x, "value": y, "fid": 0} for x, y in zip(X_TRAIN, y_train)]
+        [
+            {"coord": x, "value": y, "fid": 0}
+            for x, y in zip(X_TRAIN, y_train, strict=True)
+        ]
     )
     krg_custom.train()
     ei_custom = EI(config)
