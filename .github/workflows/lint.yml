@@ -1,8 +1,8 @@
 name: Lint
 
-# Runs the pre-commit hooks (Ruff lint and format, mdformat, whitespace and end-of-file fixes) on every push and pull
-# request, without a path filter, so documentation-only changes are checked as well. The hooks run the tools from the
-# `lint` dependency group at the versions in uv.lock. The slower tests are in ci.yml.
+# Runs the pre-commit hooks (Ruff lint and format, mdformat, codespell, whitespace and end-of-file fixes) on every push
+# and pull request, without a path filter, so documentation-only changes are checked as well. The hooks run the tools
+# from the `lint` dependency group at the versions in uv.lock. The slower tests are in ci.yml.
 
 on:
   push:
