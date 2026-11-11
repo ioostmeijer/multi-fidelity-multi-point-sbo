@@ -64,6 +64,7 @@ lint = [
     "mdformat",
     "mdformat-mkdocs",
     "mdformat-tables",
+    "codespell",
 ]
 
 # Full dev requirements for development, including testing, documentation and linting
@@ -104,6 +105,20 @@ ignore = ["D100", "D401", "ANN002", "ANN003"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.codespell]
+# The default dictionaries (common typos) plus .codespell-en-GB.txt, which flags American spellings (-ize, -or, -er
+# and single-l endings) so the text stays British. That file is codespell's en-GB_to_en-US dictionary reversed,
+# without the words that are also British: license (the verb, and the MIT License), program (software) and math (the
+# Python module, LaTeX). Inline: `codespell:ignore <word>` in a comment ignores that word on that line.
+dictionary = ".codespell-en-GB.txt,-"
+# The SVGs hold embedded fonts and the lock file hashes.
+skip = "*.svg,uv.lock,.codespell-en-GB.txt"
+# nd: "nD" (n dimensions).
+ignore-words-list = "nd"
+# Names from other packages (scipy.optimize, smt's .optimize(), mermaid.initialize, str.capitalize, matplotlib's
+# color= and loc="center") and the titles of cited papers, which keep their American spelling.
+ignore-regex = '''\.(optimize|initialize|capitalize)\b|\bcolor\s*[=:]|["'](color|center)["']|variable-fidelity surrogate modeling|Surrogate Modeling Toolbox|Optimization and Uncertainty Quantification|Multidisciplinary Optimization|Multi-fidelity optimization|\boptimization,?["”]'''  # codespell:ignore
 
 [tool.pytest.ini_options]
 minversion = "6.0"

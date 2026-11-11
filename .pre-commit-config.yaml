@@ -27,6 +27,14 @@ repos:
         language: system
         types: [markdown]
 
+      # Spelling: common typos, and British spelling (see [tool.codespell] in pyproject.toml). Reports only; fix the
+      # words by hand, or with `uv run codespell --write-changes`.
+      - id: codespell
+        name: codespell
+        entry: uv run --no-sync codespell
+        language: system
+        types: [text]
+
       - id: end-of-file-fixer
         name: fix end of files
         entry: uv run --no-sync end-of-file-fixer

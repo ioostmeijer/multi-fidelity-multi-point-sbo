@@ -13,6 +13,8 @@ All notable changes to this project are listed in this file. The format is based
     (`raise ... from`, `zip(..., strict=...)` and misplaced `noqa` comments).
 - A workflow (`project-in-dev.yml`) moves the issues linked in a merged pull request into `dev` (`Part of #N`) to **In
     dev** on the project board.
+- A `codespell` pre-commit hook checks the spelling: common typos, and British spelling with a project dictionary of
+    American-to-British spellings (`.codespell-en-GB.txt`), configured in `pyproject.toml`.
 
 ## [1.1.0] - 2026-11-10
 

@@ -44,9 +44,16 @@ only: `uv.lock`. Upgrade them like any other dependency (see [Dependencies](#dep
 | `ruff-check`                                           | Python         | Lint (pycodestyle, pyflakes, bugbear, builtins, comprehensions, annotations, NumPy docstrings) and sort imports. |
 | `ruff-format`                                          | Python         | Format (line length 88).                                                                                         |
 | `mdformat` (with `mdformat-mkdocs`, `mdformat-tables`) | Markdown       | Format: wrap at 120 characters, number lists, align tables; keeps the MkDocs syntax.                             |
+| `codespell`                                            | All text files | Report common typos and American spellings (British spelling); see below.                                        |
 | `end-of-file-fixer`, `trailing-whitespace`             | All text files | One final newline, no trailing spaces.                                                                           |
 
 The formatting hooks change the files and fail the commit; add the changed files and commit again.
+
+The project uses British spelling (optimisation, modelling, colour). `codespell` checks it with its default dictionaries
+plus `.codespell-en-GB.txt`, which maps American spellings to British ones (configured under `[tool.codespell]` in
+`pyproject.toml`). It only reports; fix the words by hand or with `uv run codespell --write-changes`. Names from other
+packages (`scipy.optimize`, `color=`) and the titles of cited papers keep their American spelling: the `ignore-regex` in
+`pyproject.toml` lists them. Add a new one there, or put `codespell:ignore <word>` in a comment on that line.
 
 ## Continuous Integration
 
