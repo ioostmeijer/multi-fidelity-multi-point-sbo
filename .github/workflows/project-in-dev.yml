@@ -1,0 +1,55 @@
+name: Move issues to In dev
+
+# When a pull request into dev is merged, set the linked issues ("Part of #N") to "In dev" on the
+# SBO roadmap project. The issues stay open; the release pull request into main closes them.
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  in-dev:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Set linked issues to In dev
+        env:
+          # GITHUB_TOKEN can't write to a user project: fine-grained PAT with Projects read/write.
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          # Passed through env (not ${{ }} in the script), so the body can't inject shell commands.
+          PR_BODY: ${{ github.event.pull_request.body }}
+          REPO: ${{ github.repository }}
+          PROJECT_ID: PVT_kwHOBG3Nt84Bq_hZ
+          STATUS_FIELD_ID: PVTSSF_lAHOBG3Nt84Bq_hZzhpUKcg
+          IN_DEV_OPTION_ID: ebac54f3
+        shell: bash
+        run: |
+          issues=$(printf '%s' "$PR_BODY" \
+            | grep -oiE '(part of|closes|fixes|resolves) #[0-9]+' | grep -oE '[0-9]+' | sort -u)
+          if [ -z "$issues" ]; then echo "No linked issues in the pull request body."; exit 0; fi
+          for n in $issues; do
+            item=$(gh api graphql -f query='
+              query($owner: String!, $name: String!, $n: Int!) {
+                repository(owner: $owner, name: $name) {
+                  issue(number: $n) { projectItems(first: 20) { nodes { id project { id } } } }
+                }
+              }' -f owner="${REPO%/*}" -f name="${REPO#*/}" -F n="$n" \
+              --jq ".data.repository.issue.projectItems.nodes[] | select(.project.id == \"$PROJECT_ID\") | .id")
+            if [ -z "$item" ]; then echo "::warning::#$n is not on the project"; continue; fi
+            # A direct mutation: `gh project item-edit` also demands the read:org and
+            # read:discussion scopes, which the token doesn't need.
+            gh api graphql -f query='
+              mutation($project: ID!, $item: ID!, $field: ID!, $option: String!) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $project, itemId: $item, fieldId: $field,
+                  value: { singleSelectOptionId: $option }
+                }) { projectV2Item { id } }
+              }' -f project="$PROJECT_ID" -f item="$item" \
+              -f field="$STATUS_FIELD_ID" -f option="$IN_DEV_OPTION_ID" > /dev/null
+            echo "#$n -> In dev"
+          done
