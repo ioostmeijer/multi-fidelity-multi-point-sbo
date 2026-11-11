@@ -42,8 +42,9 @@ def test_verification_ego_async() -> None:
         if selected_functions.name == "currin":
             # Maximisation problem
             function = (  # noqa: E731
-                lambda x, selected_functions=selected_functions: -1
-                * selected_functions.functions[0](x)
+                lambda x, selected_functions=selected_functions: (
+                    -1 * selected_functions.functions[0](x)
+                )
             )
         else:
             function = selected_functions.functions[0]

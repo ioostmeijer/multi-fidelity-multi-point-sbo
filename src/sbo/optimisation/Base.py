@@ -321,8 +321,9 @@ class OptimisationBase(Base):
             },
             "infill_value": {
                 "threshold": self.config.get("optimisation.min_infill_value", None),
-                "lambda": lambda infill_value_test, threshold: infill_value_test
-                < threshold,
+                "lambda": lambda infill_value_test, threshold: (
+                    infill_value_test < threshold
+                ),
                 "value": infill_value,
             },
         }
@@ -422,9 +423,9 @@ class OptimisationBase(Base):
         self._optimisation_data["total"]["function_calls"] = function_calls
         self._optimisation_data["total"]["function_calls_HF"] = function_calls[0]
         self._optimisation_data["total"]["sample_points"] = surrogate.samples.copy()
-        self._optimisation_data["total"][
-            "surrogate_optimum"
-        ] = current_surrogate_optimum.copy()
+        self._optimisation_data["total"]["surrogate_optimum"] = (
+            current_surrogate_optimum.copy()
+        )
 
         return self._calc_stopping_criteria(
             iteration=iteration,

@@ -194,9 +194,9 @@ def test_calc_stopping_criteria() -> None:
             total_data=tot,
             optimisation_data=opt_data,
         )
-        assert (
-            result is expected
-        ), f"case {idx} failed: got {result}, expected {expected}, {cases[idx]}"
+        assert result is expected, (
+            f"case {idx} failed: got {result}, expected {expected}, {cases[idx]}"
+        )
 
 
 @pytest.mark.unit

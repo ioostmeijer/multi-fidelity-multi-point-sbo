@@ -31,8 +31,7 @@ class RBF(SurrogateBase):
 
         if self.config.num_fidelities > 1:
             msg = (
-                "RBF model does not support multiple fidelities, "
-                "will only be using HF."
+                "RBF model does not support multiple fidelities, will only be using HF."
             )
             self.config.logger.warning(msg)
 

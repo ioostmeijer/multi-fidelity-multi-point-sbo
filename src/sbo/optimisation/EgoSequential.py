@@ -149,7 +149,7 @@ class EgoSequential(OptimisationBase):
         total_time = time.time() - start_time
         self._optimisation_data["total"]["time_elapsed"] = total_time
         self.config.logger.info(
-            "EGO Sequential Optimisation completed in " f"{total_time:.2f} seconds."
+            f"EGO Sequential Optimisation completed in {total_time:.2f} seconds."
         )
 
         # return the best point

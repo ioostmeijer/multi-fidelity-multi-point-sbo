@@ -232,8 +232,7 @@ class EgoAsync(OptimisationBase):
                     source=worker_rank, tag=22, status=self.mpi_status
                 )
                 self.config.logger.debug(
-                    f"Coordinator received results {results} from worker "
-                    f"{worker_rank}"
+                    f"Coordinator received results {results} from worker {worker_rank}"
                 )
 
                 if results == "STOPPED":
@@ -395,11 +394,11 @@ class EgoAsync(OptimisationBase):
                 break
 
             self.config.logger.debug(
-                f"Worker {self.mpi_rank} received {len(task)} points " f"({task})"
+                f"Worker {self.mpi_rank} received {len(task)} points ({task})"
             )
             results = [self.evaluate_point(pt) for pt in task]
             self.config.logger.debug(
-                f"Worker {self.mpi_rank} sending results " f"({results})"
+                f"Worker {self.mpi_rank} sending results ({results})"
             )
             self.mpi_comm.send(results, dest=0, tag=22)
         return None
