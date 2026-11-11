@@ -46,12 +46,12 @@ def test_validate_settings_with_new_value() -> None:
     Should return the default settings with the new value for 'number_new_points'.
     """
     settings = validate_settings({"number_new_points": 5})
-    assert (
-        settings["number_new_points"] == 5
-    ), "The number of new points should be updated to 5."
-    assert (
-        settings["nested"] == DEFAULT_SETTINGS["nested"]["default"]
-    ), "Other settings should remain unchanged."
+    assert settings["number_new_points"] == 5, (
+        "The number of new points should be updated to 5."
+    )
+    assert settings["nested"] == DEFAULT_SETTINGS["nested"]["default"], (
+        "Other settings should remain unchanged."
+    )
 
 
 @pytest.mark.unit
@@ -67,9 +67,9 @@ def test_validate_settings_with_wrong_key(caplog: Generator) -> None:
     assert {
         key: DEFAULT_SETTINGS[key]["default"] for key in DEFAULT_SETTINGS
     } == settings, "Settings should remain unchanged when an invalid key is provided."
-    assert any(
-        "wrong_key" in rec.getMessage() for rec in caplog.records
-    ), "Expected a warning mentioning 'wrong_key'."
+    assert any("wrong_key" in rec.getMessage() for rec in caplog.records), (
+        "Expected a warning mentioning 'wrong_key'."
+    )
 
 
 @pytest.mark.unit
@@ -83,15 +83,15 @@ def test_validate_settings_with_wrong_value(caplog: Generator) -> None:
     caplog.set_level(logging.WARNING, logger="test_logger")
     settings = validate_settings({"number_new_points": -1}, logger=logger)
     # Ensure a warning mentioning the key was emitted
-    assert any(
-        "number_new_points" in rec.getMessage() for rec in caplog.records
-    ), "Expected a warning mentioning 'number_new_points'."
+    assert any("number_new_points" in rec.getMessage() for rec in caplog.records), (
+        "Expected a warning mentioning 'number_new_points'."
+    )
     assert (
         settings["number_new_points"] == DEFAULT_SETTINGS["number_new_points"]["min"]
     ), "Invalid value should revert to the default number of new points."
-    assert (
-        settings["nested"] == DEFAULT_SETTINGS["nested"]["default"]
-    ), "Other settings should remain unchanged."
+    assert settings["nested"] == DEFAULT_SETTINGS["nested"]["default"], (
+        "Other settings should remain unchanged."
+    )
 
 
 @pytest.mark.unit
@@ -104,15 +104,15 @@ def test_validate_setting_with_wrong_type(caplog: Generator) -> None:
     logger.propagate = True
     caplog.set_level(logging.WARNING, logger="test_logger")
     settings = validate_settings({"random_seed": "not_an_int"}, logger=logger)
-    assert any(
-        "random_seed" in rec.getMessage() for rec in caplog.records
-    ), "Expected a warning mentioning 'random_seed'."
-    assert (
-        settings["random_seed"] == DEFAULT_SETTINGS["random_seed"]["default"]
-    ), "Invalid type should revert to the default random seed."
-    assert (
-        settings["nested"] == DEFAULT_SETTINGS["nested"]["default"]
-    ), "Other settings should remain unchanged."
+    assert any("random_seed" in rec.getMessage() for rec in caplog.records), (
+        "Expected a warning mentioning 'random_seed'."
+    )
+    assert settings["random_seed"] == DEFAULT_SETTINGS["random_seed"]["default"], (
+        "Invalid type should revert to the default random seed."
+    )
+    assert settings["nested"] == DEFAULT_SETTINGS["nested"]["default"], (
+        "Other settings should remain unchanged."
+    )
 
 
 @pytest.mark.unit
@@ -136,9 +136,9 @@ def test_validate_settings_with_used_algorithms() -> None:
         for key in EGOSEQUENTIAL_DEFAULT_SETTINGS
     }
     resulting_settings["optimisation"]["convergence_threshold"] = 2e-6
-    assert (
-        settings == resulting_settings
-    ), "Settings should include defaults and the used algorithms' settings."
+    assert settings == resulting_settings, (
+        "Settings should include defaults and the used algorithms' settings."
+    )
 
 
 @pytest.mark.unit
@@ -158,9 +158,9 @@ def test_validate_settings_with_used_algorithms_and_empty() -> None:
         key: EGOSEQUENTIAL_DEFAULT_SETTINGS[key]["default"]
         for key in EGOSEQUENTIAL_DEFAULT_SETTINGS
     }
-    assert (
-        settings == resulting_settings
-    ), "Settings should include defaults and the used algorithms' settings."
+    assert settings == resulting_settings, (
+        "Settings should include defaults and the used algorithms' settings."
+    )
 
 
 @pytest.mark.unit
@@ -193,9 +193,9 @@ def test_validate_settings_with_used_algorithms_and_invalid_key(
         "Settings should include defaults and the used algorithms' "
         "settings, ignoring invalid keys."
     )
-    assert any(
-        "invalid_key" in rec.getMessage() for rec in caplog.records
-    ), "Expected a warning mentioning 'invalid_key'."
+    assert any("invalid_key" in rec.getMessage() for rec in caplog.records), (
+        "Expected a warning mentioning 'invalid_key'."
+    )
 
 
 @pytest.mark.unit
@@ -230,9 +230,9 @@ def test_validate_settings_with_used_algorithms_and_invalid_value(
         "Settings should include defaults and the used algorithms' "
         "settings with the minimum value for a value below the minimum."
     )
-    assert any(
-        "convergence_threshold" in rec.getMessage() for rec in caplog.records
-    ), "Expected a warning mentioning 'convergence_threshold'."
+    assert any("convergence_threshold" in rec.getMessage() for rec in caplog.records), (
+        "Expected a warning mentioning 'convergence_threshold'."
+    )
 
 
 @pytest.mark.unit
@@ -290,9 +290,9 @@ def test_validate_settings_with_changed_not_allowed_value(caplog: Generator) -> 
         "Settings should include defaults and the used algorithms' "
         "settings with the default value for 'corr' since 'not_allowed' is not allowed."
     )
-    assert any(
-        rec.levelno == logging.WARNING for rec in caplog.records
-    ), "Expected at least one warning to be logged."
+    assert any(rec.levelno == logging.WARNING for rec in caplog.records), (
+        "Expected at least one warning to be logged."
+    )
 
 
 @pytest.mark.unit
@@ -304,9 +304,9 @@ def test_validate_settings_w_nested_options() -> None:
         used_algorithms=used_algorithms,
     )
 
-    assert (
-        settings["infill"]["single_fid_infill"] == "GEI"
-    ), "The 'single_fid_infill' should be set to 'GEI' in the nested options."
+    assert settings["infill"]["single_fid_infill"] == "GEI", (
+        "The 'single_fid_infill' should be set to 'GEI' in the nested options."
+    )
 
 
 @pytest.mark.unit

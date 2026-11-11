@@ -323,8 +323,7 @@ class EgoMPI(OptimisationBase):
 
             # Calculate results
             self.config.logger.debug(
-                f"Worker {self.mpi_rank} starting calculations for "
-                f"{len(task)} points."
+                f"Worker {self.mpi_rank} starting calculations for {len(task)} points."
             )
             result = [self.evaluate_point(point, inplace=False) for point in task]
             self.config.logger.debug(f"Worker {self.mpi_rank} finished calculations.")

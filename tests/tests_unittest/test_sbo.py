@@ -253,9 +253,9 @@ def test_sbo_initialisation_w_initial_samples() -> None:
     )
     sbo = SBO(config, initial_samples=initial_samples)
 
-    assert sbo._surrogate.samples == {
-        0: initial_samples
-    }, "Initial samples were not set correctly in SBO."
+    assert sbo._surrogate.samples == {0: initial_samples}, (
+        "Initial samples were not set correctly in SBO."
+    )
 
 
 @pytest.mark.unit
@@ -276,15 +276,12 @@ def test_sbo_initialisation_wo_initial_samples_single_fid() -> None:
     # Check if n samples are generated
     assert len(sbo_sf._surrogate.samples[0]) == config_sf.get(
         "number_initial_samples"
-    ), (
-        "Not the correct number of initial samples were generated for "
-        "single-fidelity."
-    )
+    ), "Not the correct number of initial samples were generated for single-fidelity."
 
     # Check if all samples are HF (fid == 0)
-    assert list(sbo_sf._surrogate.samples.keys()) == [
-        0
-    ], "Initial samples do not have the correct fidelity for single-fidelity."
+    assert list(sbo_sf._surrogate.samples.keys()) == [0], (
+        "Initial samples do not have the correct fidelity for single-fidelity."
+    )
 
 
 @pytest.mark.unit
@@ -304,8 +301,7 @@ def test_sbo_initialisation_wo_initial_samples_mult_fid_nested() -> None:
     sbo_mf_nested = SBO(config_mf_nested)
     # Check if all HF samples are included in the LF samples
     assert _nested_samples(sbo_mf_nested._surrogate.samples), (
-        "Initial samples are not nested between fidelities for multi-fidelity "
-        "nested."
+        "Initial samples are not nested between fidelities for multi-fidelity nested."
     )
 
     # Check if the correct number of samples are generated for each fidelity
@@ -321,8 +317,7 @@ def test_sbo_initialisation_wo_initial_samples_mult_fid_nested() -> None:
 
     # Check if only fidelity 0 and 1 are present
     assert set(sbo_mf_nested._surrogate.samples.keys()) == {0, 1}, (
-        "Initial samples do not have the correct fidelities for multi-fidelity "
-        "nested."
+        "Initial samples do not have the correct fidelities for multi-fidelity nested."
     )
 
 
@@ -349,20 +344,18 @@ def test_sbo_initialisation_wo_initial_samples_mult_fid_non_nested() -> None:
         "Not enough correct total number of initial samples were generated for "
         "multi-fidelity non-nested."
     )
-    assert (
-        num_samples <= config_mf_non_nested.get("number_initial_samples") + 2
-    ), "Too many initial samples were generated for multi-fidelity non-nested."
+    assert num_samples <= config_mf_non_nested.get("number_initial_samples") + 2, (
+        "Too many initial samples were generated for multi-fidelity non-nested."
+    )
 
     # Check if the samples are not nested between fidelities
     assert not _nested_samples(sbo_mf_non_nested._surrogate.samples), (
-        "Initial samples are nested between fidelities for multi-fidelity "
-        "non-nested."
+        "Initial samples are nested between fidelities for multi-fidelity non-nested."
     )
 
     # Check if only fidelity 0 and 1 are present
     assert set(sbo_mf_non_nested._surrogate.samples.keys()) == {0, 1}, (
-        "Initial samples do not have the correct fidelities for multi-fidelity "
-        "nested."
+        "Initial samples do not have the correct fidelities for multi-fidelity nested."
     )
 
 
@@ -564,9 +557,9 @@ def test_sbo_optimum_on_worker_rank(monkeypatch: pytest.MonkeyPatch) -> None:
     assert sbo.run() == {}, "run did not return {} on a worker rank."
     assert sbo.optimum == {}, "optimum did not return {} on a worker rank."
     assert sbo() == {}, "SBO call did not return {} on a worker rank."
-    assert (
-        n_solve_calls == 1
-    ), f"The optimisation ran {n_solve_calls} times on a worker rank instead of once."
+    assert n_solve_calls == 1, (
+        f"The optimisation ran {n_solve_calls} times on a worker rank instead of once."
+    )
 
 
 @pytest.mark.unit

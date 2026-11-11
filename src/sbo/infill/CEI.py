@@ -84,8 +84,13 @@ class CEI(EI):
         # infill optimisation of the base class
         best_value = min(p["value"] for p in surrogate.samples[fidelity])
         coord, neg_cei_value = self._select_sample_point_optimisation(
-            lambda x: -self.calc_infill_value(
-                np.atleast_2d(x), surrogate, best_value=best_value, fidelity=fidelity
+            lambda x: (
+                -self.calc_infill_value(
+                    np.atleast_2d(x),
+                    surrogate,
+                    best_value=best_value,
+                    fidelity=fidelity,
+                )
             ),
             constraints=self.config.scipy_constraints(),
         )
@@ -179,7 +184,7 @@ class CEI(EI):
                 raise ValueError(
                     "No samples found in surrogate model to determine best value for "
                     f"EI calculation. Exit with error: {e}"
-                )
+                ) from e
 
         # Get the EI values
         ei_value = super().calc_infill_value(

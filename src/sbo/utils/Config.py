@@ -881,9 +881,7 @@ class Config:
         """
         return self._used_algorithms
 
-    def get_setting(
-        self, key: str, algorithm: str | None = None
-    ) -> Any:  # noqa: ANN401
+    def get_setting(self, key: str, algorithm: str | None = None) -> Any:  # noqa: ANN401
         """Get a setting value.
 
         Parameters
@@ -905,7 +903,11 @@ class Config:
         )
 
     def get(
-        self, key: str, default: Any = None, *, strict: bool = True  # noqa: ANN401
+        self,
+        key: str,
+        default: Any = None,  # noqa: ANN401
+        *,
+        strict: bool = True,
     ) -> Any:  # noqa: ANN401
         """Get a setting value using dot notation.
 
@@ -1081,7 +1083,9 @@ class Config:
         raise KeyError("Invalid key type for Config.__getitem__")
 
     def __setitem__(
-        self, key: str | tuple[str, str], value: Any  # noqa: ANN401
+        self,
+        key: str | tuple[str, str],
+        value: Any,  # noqa: ANN401
     ) -> None:
         """Overload the indexing operator to set settings values.
 

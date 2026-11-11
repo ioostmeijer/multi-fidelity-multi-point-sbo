@@ -241,7 +241,7 @@ def test_validate_KRG() -> None:
                 _create_subplot(ax4, fig, x_eval, y_var_custom, "Custom KRG Variance")
 
                 plt.suptitle(
-                    f"KRG Surrogate Model " f"{function.name} ({num_samples} samples)"
+                    f"KRG Surrogate Model {function.name} ({num_samples} samples)"
                 )
 
                 # Adjust margins

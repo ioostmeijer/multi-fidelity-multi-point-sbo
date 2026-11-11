@@ -260,7 +260,7 @@ def _parse_assignments(py_file: Path) -> dict[str, str | None]:
                     if key is None:
                         continue
                 # Check for **Y spread: represented as key=None, value=Name in ast
-                for k, v in zip(val.keys, val.values):
+                for k, v in zip(val.keys, val.values, strict=True):
                     if k is None and isinstance(v, ast.Name):
                         if v.id.endswith("_DEFAULT_SETTINGS"):
                             parent = v.id

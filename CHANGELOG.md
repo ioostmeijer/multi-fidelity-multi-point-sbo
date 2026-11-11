@@ -4,6 +4,14 @@ All notable changes to this project are listed in this file. The format is based
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Development
+
+- Ruff replaces black, isort and flake8 (with its five plugins) for linting, import sorting and formatting, configured
+    in `pyproject.toml`. The code is reformatted with Ruff, and the findings it reports that flake8 missed are fixed
+    (`raise ... from`, `zip(..., strict=...)` and misplaced `noqa` comments).
+
 ## [1.1.0] - 2026-11-10
 
 ### Added
@@ -84,3 +92,4 @@ This is the code exactly as used for the thesis results; it is not actively deve
 
 [1.0.0]: https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/releases/tag/v1.0.0
 [1.1.0]: https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/releases/tag/v1.1.0
+[unreleased]: https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/compare/v1.1.0...HEAD

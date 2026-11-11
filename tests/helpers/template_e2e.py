@@ -56,9 +56,9 @@ def template_for_e2e_test(
         if mpi_comm is None or mpi_comm.Get_rank() == 0:
             _check_optimum(found_optimum)
         else:
-            assert (
-                found_optimum == {}
-            ), f"A worker rank should return an empty dict, got {found_optimum}."
+            assert found_optimum == {}, (
+                f"A worker rank should return an empty dict, got {found_optimum}."
+            )
     finally:
         # Always clean up and synchronise, also when an assertion fails: otherwise the
         # other ranks wait at the next collective call forever (deadlock).
@@ -71,7 +71,7 @@ def template_for_e2e_test(
 def _check_optimum(found_optimum: dict) -> None:
     """Check the format of the optimum and that it is the Forrester optimum."""
     assert isinstance(found_optimum, dict), (
-        f"Optimum should be a dict, " f"got {type(found_optimum)}."
+        f"Optimum should be a dict, got {type(found_optimum)}."
     )
     assert all(key in found_optimum for key in ["coord", "value"]), (
         f"Optimum should have 'coord' and 'value' keys, "
@@ -89,7 +89,7 @@ def _check_optimum(found_optimum: dict) -> None:
     )
     assert all(
         abs(a - b) < RESULT_TOLERANCE
-        for a, b in zip(found_optimum["coord"], coord_expected)
+        for a, b in zip(found_optimum["coord"], coord_expected, strict=True)
     ), (
         f"Found optimum coord {found_optimum['coord']} differs from "
         f"expected coord {coord_expected} by more than {RESULT_TOLERANCE}."

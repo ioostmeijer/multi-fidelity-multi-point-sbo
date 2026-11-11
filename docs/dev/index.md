@@ -39,13 +39,12 @@ only: `uv.lock`. Upgrade them like any other dependency (see [Dependencies](#dep
 `pre-commit autoupdate`. The hooks need the `lint` group installed: `uv sync --locked` installs it, and
 `uv sync --locked --only-group lint` installs only the hook tools.
 
-| Hook                                                                       | Files          | What it does                                                                         |
-| -------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------ |
-| `flake8` (with bugbear, comprehensions, annotations, docstrings, builtins) | Python         | Lint: errors, style, type hints, NumPy docstrings.                                   |
-| `black`                                                                    | Python         | Format (line length 88).                                                             |
-| `isort`                                                                    | Python         | Sort imports.                                                                        |
-| `mdformat` (with `mdformat-mkdocs`, `mdformat-tables`)                     | Markdown       | Format: wrap at 120 characters, number lists, align tables; keeps the MkDocs syntax. |
-| `end-of-file-fixer`, `trailing-whitespace`                                 | All text files | One final newline, no trailing spaces.                                               |
+| Hook                                                   | Files          | What it does                                                                                                     |
+| ------------------------------------------------------ | -------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `ruff-check`                                           | Python         | Lint (pycodestyle, pyflakes, bugbear, builtins, comprehensions, annotations, NumPy docstrings) and sort imports. |
+| `ruff-format`                                          | Python         | Format (line length 88).                                                                                         |
+| `mdformat` (with `mdformat-mkdocs`, `mdformat-tables`) | Markdown       | Format: wrap at 120 characters, number lists, align tables; keeps the MkDocs syntax.                             |
+| `end-of-file-fixer`, `trailing-whitespace`             | All text files | One final newline, no trailing spaces.                                                                           |
 
 The formatting hooks change the files and fail the commit; add the changed files and commit again.
 

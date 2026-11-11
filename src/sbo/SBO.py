@@ -635,8 +635,7 @@ class SBO:
 
         if not iterations_plot:
             self.config.logger.warning(
-                "No iterations to plot for the given up_to/iterations; "
-                "no plot is made."
+                "No iterations to plot for the given up_to/iterations; no plot is made."
             )
             return
 

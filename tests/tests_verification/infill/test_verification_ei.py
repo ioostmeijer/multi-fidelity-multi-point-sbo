@@ -41,7 +41,10 @@ def fixture() -> Generator:
     )
     krg_custom = KRG(config)
     krg_custom.set_training_data(
-        [{"coord": x, "value": y, "fid": 0} for x, y in zip(X_TRAIN, y_train)]
+        [
+            {"coord": x, "value": y, "fid": 0}
+            for x, y in zip(X_TRAIN, y_train, strict=True)
+        ]
     )
     krg_custom.train()
     ei_custom = EI(config)
@@ -80,8 +83,9 @@ def test_ei_matches_smt(fixture: Generator, xi: int) -> None:
     krg_custom, ei_custom, smt_ego = fixture
     custom_ei_value = ei_custom.calc_infill_value(X_TEST[xi], krg_custom)
     smt_ei_value = smt_ego.EI(X_TEST[xi])[0][0]
-    assert np.isclose(
-        custom_ei_value, smt_ei_value, atol=1e-4, rtol=1e-5
-    ), "EI values are not close: absolute_diff: {}, relative_diff: {}".format(
-        custom_ei_value - smt_ei_value, (custom_ei_value - smt_ei_value) / smt_ei_value
+    assert np.isclose(custom_ei_value, smt_ei_value, atol=1e-4, rtol=1e-5), (
+        "EI values are not close: absolute_diff: {}, relative_diff: {}".format(
+            custom_ei_value - smt_ei_value,
+            (custom_ei_value - smt_ei_value) / smt_ei_value,
+        )
     )

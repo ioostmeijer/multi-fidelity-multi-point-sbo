@@ -76,7 +76,7 @@ def _parse_combinations(py_file: Path) -> dict[str, list[str] | None]:
             # X = {**A, **B, "extra": ...}
             elif isinstance(val, ast.Dict):
                 parents = []
-                for k, v in zip(val.keys, val.values):
+                for k, v in zip(val.keys, val.values, strict=True):
                     if k is None and isinstance(v, ast.Name):  # **spread
                         parents.append(v.id)
                 result[var] = parents if parents else None
