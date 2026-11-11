@@ -6,6 +6,11 @@ All notable changes to this project are listed in this file. The format is based
 
 ## [Unreleased]
 
+### Changed
+
+- The README and the documentation mark `CoKRG` and `FilteredGEI` as planned for 1.4.0 and `CEI` for 1.5.0, instead of
+    "not implemented" or "not functional".
+
 ### Development
 
 - Ruff replaces black, isort and flake8 (with its five plugins) for linting, import sorting and formatting, configured
@@ -13,6 +18,8 @@ All notable changes to this project are listed in this file. The format is based
     (`raise ... from`, `zip(..., strict=...)` and misplaced `noqa` comments).
 - A workflow (`project-in-dev.yml`) moves the issues linked in a merged pull request into `dev` (`Part of #N`) to **In
     dev** on the project board.
+- A `codespell` pre-commit hook checks the spelling: common typos, and British spelling with a project dictionary of
+    American-to-British spellings (`.codespell-en-GB.txt`), configured in `pyproject.toml`.
 
 ## [1.1.0] - 2026-11-10
 

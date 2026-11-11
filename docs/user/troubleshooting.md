@@ -52,5 +52,5 @@ both bounds of an existing config, use `config.set_bounds(lb, ub)`.
 
 ## `NotImplementedError` When Creating the Optimiser
 
-`CEI` and `CoKRG` are not implemented yet, and `FilteredGEI` needs `CoKRG` for more than one fidelity. See the status of
-every algorithm on the [home page](../index.md#included-algorithms).
+`CoKRG` and `FilteredGEI` (which needs `CoKRG` for more than one fidelity) are planned for 1.4.0, and `CEI` for 1.5.0.
+See the status of every algorithm on the [home page](../index.md#included-algorithms).

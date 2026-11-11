@@ -57,28 +57,28 @@ The algorithms are selected by name in the `used_algorithms` argument of `Config
 
 === "Surrogate models"
 
-    | Name    | Description                                                | Fidelities | Status                |
-    | ------- | ---------------------------------------------------------- | ---------- | --------------------- |
-    | `RBF`   | Radial basis function model                                | 1          | Verified              |
-    | `KRG`   | Kriging model                                              | 1          | Verified              |
-    | `HK`    | Hierarchical Kriging from [[1]](#references)               | 2 or more  | Verified              |
-    | `MFK`   | Multi-fidelity Kriging, a wrapper around the SMT MFK model | 2 or more  | Not verified          |
-    | `CoKRG` | Co-Kriging                                                 | 2 or more  | Not implemented (yet) |
+    | Name    | Description                                                | Fidelities | Status          |
+    | ------- | ---------------------------------------------------------- | ---------- | --------------- |
+    | `RBF`   | Radial basis function model                                | 1          | Verified        |
+    | `KRG`   | Kriging model                                              | 1          | Verified        |
+    | `HK`    | Hierarchical Kriging from [[1]](#references)               | 2 or more  | Verified        |
+    | `MFK`   | Multi-fidelity Kriging, a wrapper around the SMT MFK model | 2 or more  | Not verified    |
+    | `CoKRG` | Co-Kriging                                                 | 2 or more  | Planned (1.4.0) |
 
 `HK` and `MFK` are multi-fidelity surrogates, which can be used with one or more fidelities. With one fidelity they
-reduce to `KRG`, and the multi-fidelity infill strategies fall back to their single-fidelity equivalents. `CoKRG` is not
-implemented yet, so the multi-fidelity infill strategies that requires it (`FilteredGEI`) is not functional.
+reduce to `KRG`, and the multi-fidelity infill strategies fall back to their single-fidelity equivalents. `CoKRG` is
+planned for 1.4.0, together with `FilteredGEI`, the multi-fidelity infill strategy that needs it.
 
 === "Infill strategies"
 
-    | Name          | Description                             | Fidelities         | Status                         |
-    | ------------- | --------------------------------------- | ------------------ | ------------------------------ |
-    | `EI`          | Expected Improvement                    | Samples HF only    | Verified                       |
-    | `GEI`         | Generalised Expected Improvement        | Samples HF only    | Verified                       |
-    | `TwoStep`     | Two-step infill from [[2]](#references) | Chooses a fidelity | Verified                       |
-    | `Random`      | Add a random point                      | Random fidelity    | Verified                       |
-    | `FilteredGEI` | Filtered GEI from [[3]](#references)    | Chooses a fidelity | Not functional (needs `CoKRG`) |
-    | `CEI`         | Constrained Expected Improvement        | Samples HF only    | Not implemented (yet)          |
+    | Name          | Description                             | Fidelities         | Status          |
+    | ------------- | --------------------------------------- | ------------------ | --------------- |
+    | `EI`          | Expected Improvement                    | Samples HF only    | Verified        |
+    | `GEI`         | Generalised Expected Improvement        | Samples HF only    | Verified        |
+    | `TwoStep`     | Two-step infill from [[2]](#references) | Chooses a fidelity | Verified        |
+    | `Random`      | Add a random point                      | Random fidelity    | Verified        |
+    | `FilteredGEI` | Filtered GEI from [[3]](#references)    | Chooses a fidelity | Planned (1.4.0) |
+    | `CEI`         | Constrained Expected Improvement        | Samples HF only    | Planned (1.5.0) |
 
 === "Optimisation algorithms"
 
@@ -95,7 +95,7 @@ implemented yet, so the multi-fidelity infill strategies that requires it (`Filt
 
 - **Verified:** the results were checked against a reference implementation or the paper (see the verification tests).
 - **Not verified:** runs, but the results have not been checked.
-- **Not functional / Not implemented:** creating it raises a `NotImplementedError`.
+- **Planned (version):** not available yet; planned for that release. Creating it raises a `NotImplementedError`.
 
 ## References
 

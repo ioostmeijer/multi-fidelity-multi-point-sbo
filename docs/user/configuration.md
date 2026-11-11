@@ -115,9 +115,8 @@ highest fidelity). If a fidelity level has fewer than two samples, random extra 
 !!! warning "Under development"
 
     Constraint handling is not finished yet. No infill strategy currently supports constraints, and `CEI`, the constrained
-    infill strategy, is not yet implemented. Passing `expensive_constraints` raises a `ValueError`.
-    `inexpensive_constraints` are accepted but ignored during the optimisation. Empty dicts or lists count as no
-    constraints.
+    infill strategy, is planned for 1.5.0. Passing `expensive_constraints` raises a `ValueError`. `inexpensive_constraints`
+    are accepted but ignored during the optimisation. Empty dicts or lists count as no constraints.
 
 Constraints are passed as dicts with the keys `"inequality"` and `"equality"`. Inequality constraints are satisfied when
 `g(x) <= 0`, equality constraints when `h(x) = 0`:

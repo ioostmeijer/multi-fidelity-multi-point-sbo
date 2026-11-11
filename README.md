@@ -107,15 +107,15 @@ More examples are in [`examples/`](examples) and explained in
 
 ## Algorithms
 
-| Type         | Name                                                         | Status                         |
-| ------------ | ------------------------------------------------------------ | ------------------------------ |
-| Surrogate    | `RBF`, `KRG`, `HK` (hierarchical Kriging [[1]](#references)) | Verified                       |
-| Surrogate    | `MFK` (SMT [[2]](#references) multi-fidelity Kriging)        | Not verified                   |
-| Surrogate    | `CoKRG` (Co-Kriging)                                         | Not implemented (yet)          |
-| Infill       | `EI`, `GEI`, `TwoStep` [[3]](#references), `Random`          | Verified                       |
-| Infill       | `FilteredGEI` [[4]](#references)                             | Not functional (needs `CoKRG`) |
-| Infill       | `CEI` (Constrained Expected Improvement)                     | Not implemented (yet)          |
-| Optimisation | `EgoSequential`, `EgoMPI`, `EgoAsync`                        | Verified                       |
+| Type         | Name                                                         | Status          |
+| ------------ | ------------------------------------------------------------ | --------------- |
+| Surrogate    | `RBF`, `KRG`, `HK` (hierarchical Kriging [[1]](#references)) | Verified        |
+| Surrogate    | `MFK` (SMT [[2]](#references) multi-fidelity Kriging)        | Not verified    |
+| Surrogate    | `CoKRG` (Co-Kriging)                                         | Planned (1.4.0) |
+| Infill       | `EI`, `GEI`, `TwoStep` [[3]](#references), `Random`          | Verified        |
+| Infill       | `FilteredGEI` [[4]](#references)                             | Planned (1.4.0) |
+| Infill       | `CEI` (Constrained Expected Improvement)                     | Planned (1.5.0) |
+| Optimisation | `EgoSequential`, `EgoMPI`, `EgoAsync`                        | Verified        |
 
 The [documentation](https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/#included-algorithms) describes each
 algorithm and which fidelities it supports.
