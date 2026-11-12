@@ -20,6 +20,10 @@ All notable changes to this project are listed in this file. The format is based
     dev** on the project board.
 - A `codespell` pre-commit hook checks the spelling: common typos, and British spelling with a project dictionary of
     American-to-British spellings (`.codespell-en-GB.txt`), configured in `pyproject.toml`.
+- Ruff's security rules (`S`, flake8-bandit) are enabled; `assert` is allowed in the tests. Loading a pickle in
+    `load_model_from_file` is documented as safe for trusted files only.
+- A workflow (`audit.yml`) checks the locked dependencies (`uv.lock`) for known vulnerabilities with `uv audit`, when
+    the dependencies change and weekly.
 
 ## [1.1.0] - 2026-11-10
 
