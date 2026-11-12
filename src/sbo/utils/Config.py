@@ -234,7 +234,7 @@ class Config:
             msg = (
                 "Expensive constraints are provided but the selected infill "
                 f"algorithm ({used_algorithms.get('infill', None)}) is "
-                f"not compatible with expensive constraints. Please select an infill"
+                f"not compatible with expensive constraints. Please choose an infill"
                 f" algorithm from the following list: "
                 f"{EXPENSIVE_CONSTRAINT_COMPATIBLE_INFILL}."
             )
