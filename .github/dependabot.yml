@@ -1,13 +1,24 @@
-# Pull requests for new versions of the GitHub Actions used in the workflows (not for the Python
-# packages: uv.lock is kept as used for the thesis results).
+# Pull requests for new versions of the GitHub Actions used in the workflows, and of the Python packages in uv.lock
+# (v1.0.0 keeps the environment used for the thesis results).
 version: 2
 updates:
   - package-ecosystem: "github-actions"
     directories:
       - "/"                          # .github/workflows
       - "/.github/actions/setup-env"  # the shared setup action
+    target-branch: "dev"
     schedule:
       interval: "quarterly"
     groups:
       github-actions:                # one pull request for all updates
+        patterns: ["*"]
+
+  # Updates stay within the version ranges in pyproject.toml (e.g. setuptools <81 while mf2 is supported).
+  - package-ecosystem: "uv"
+    directory: "/"                   # pyproject.toml and uv.lock
+    target-branch: "dev"
+    schedule:
+      interval: "monthly"
+    groups:
+      python-dependencies:           # one pull request for all updates
         patterns: ["*"]

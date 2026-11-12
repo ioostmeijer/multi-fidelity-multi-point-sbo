@@ -24,6 +24,9 @@ All notable changes to this project are listed in this file. The format is based
     `load_model_from_file` is documented as safe for trusted files only.
 - A workflow (`audit.yml`) checks the locked dependencies (`uv.lock`) for known vulnerabilities with `uv audit`, when
     the dependencies change and weekly.
+- Dependabot opens a monthly pull request into `dev` that updates the Python packages in `uv.lock` (grouped), within the
+    version ranges in `pyproject.toml`. `v1.0.0` keeps the environment used for the thesis results. The quarterly GitHub
+    Actions updates now also go into `dev` instead of `main`.
 
 ## [1.1.0] - 2026-11-10
 
