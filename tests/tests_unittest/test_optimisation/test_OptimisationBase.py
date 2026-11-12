@@ -267,7 +267,7 @@ def test_save_optimisation_data(tmp_path: pathlib.Path) -> None:
     assert saved_path.exists()
 
     with open(saved_path, "rb") as f:
-        loaded = pickle.load(f)
+        loaded = pickle.load(f)  # noqa: S301 (file written by the test)
     assert loaded == optimisation.optimisation_data
 
 

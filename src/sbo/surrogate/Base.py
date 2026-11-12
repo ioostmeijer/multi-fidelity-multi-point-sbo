@@ -352,14 +352,21 @@ class SurrogateBase(Base):
         ------
         FileNotFoundError
             If the model file does not exist.
+
+        Warnings
+        --------
+        The model is loaded with `pickle`, which can run arbitrary code while loading.
+        Only load model files that you created yourself or otherwise trust. Version
+        2.0.0 replaces pickle with a data-only format (issue #54).
         """
         # Check if file exists
         if not os.path.isfile(file_path):
             self.config.logger.error(f"Model file {file_path} does not exist.")
             raise FileNotFoundError(f"Model file {file_path} does not exist.")
 
+        # Trusted files only: see the Warnings section of the docstring.
         with open(file_path, "rb") as f:
-            model_data = pickle.load(f)
+            model_data = pickle.load(f)  # noqa: S301
         self.load_model(model_data)
         return
 
