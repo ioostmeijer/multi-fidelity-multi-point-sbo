@@ -1,0 +1,43 @@
+name: Audit
+
+# Checks the locked dependencies (uv.lock, all groups) for known vulnerabilities with `uv audit` (OSV advisory database).
+# Runs when the dependencies change, and weekly, as new advisories appear for unchanged dependencies.
+# Locally: `uv audit --locked`.
+
+on:
+  push:
+    branches: [ main, dev ]
+    paths: [ 'uv.lock', 'pyproject.toml', '.github/workflows/audit.yml' ]
+  pull_request:
+    branches: [ main, dev ]
+    paths: [ 'uv.lock', 'pyproject.toml', '.github/workflows/audit.yml' ]
+  schedule:
+    - cron: "0 4 * * 1"   # Mondays 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  uv-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+
+      # Ignored: two setuptools advisories (sdist on macOS; legacy wheel install on Windows), fixed in setuptools 83/84.
+      # setuptools stays <81 while "module": "mf2" is supported (see pyproject.toml); remove both ignores with that pin
+      # in version 2.0.0.
+      - name: Run uv audit
+        run: >
+          uv audit --locked --preview-features audit-command
+          --ignore PYSEC-2026-3447
+          --ignore GHSA-xmj3-9gf7-h52w
