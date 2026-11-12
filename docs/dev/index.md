@@ -21,6 +21,7 @@ Prefix commands with `uv run` (e.g. `uv run pytest`), or activate `.venv` first.
 ```bash
 pre-commit run --all-files                  # format + lint (see the hooks below)
 deptry src                                  # dependency hygiene (unused / undeclared)
+uv audit --locked                           # known vulnerabilities in the locked dependencies (uv.lock)
 
 pytest -m unit                              # fast unit tests
 pytest -m verification                      # slower verification tests
@@ -39,13 +40,13 @@ only: `uv.lock`. Upgrade them like any other dependency (see [Dependencies](#dep
 `pre-commit autoupdate`. The hooks need the `lint` group installed: `uv sync --locked` installs it, and
 `uv sync --locked --only-group lint` installs only the hook tools.
 
-| Hook                                                   | Files          | What it does                                                                                                     |
-| ------------------------------------------------------ | -------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `ruff-check`                                           | Python         | Lint (pycodestyle, pyflakes, bugbear, builtins, comprehensions, annotations, NumPy docstrings) and sort imports. |
-| `ruff-format`                                          | Python         | Format (line length 88).                                                                                         |
-| `mdformat` (with `mdformat-mkdocs`, `mdformat-tables`) | Markdown       | Format: wrap at 120 characters, number lists, align tables; keeps the MkDocs syntax.                             |
-| `codespell`                                            | All text files | Report common typos and American spellings (British spelling); see below.                                        |
-| `end-of-file-fixer`, `trailing-whitespace`             | All text files | One final newline, no trailing spaces.                                                                           |
+| Hook                                                   | Files          | What it does                                                                                                             |
+| ------------------------------------------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `ruff-check`                                           | Python         | Lint (pycodestyle, pyflakes, bugbear, builtins, comprehensions, annotations, NumPy docstrings, bandit) and sort imports. |
+| `ruff-format`                                          | Python         | Format (line length 88).                                                                                                 |
+| `mdformat` (with `mdformat-mkdocs`, `mdformat-tables`) | Markdown       | Format: wrap at 120 characters, number lists, align tables; keeps the MkDocs syntax.                                     |
+| `codespell`                                            | All text files | Report common typos and American spellings (British spelling); see below.                                                |
+| `end-of-file-fixer`, `trailing-whitespace`             | All text files | One final newline, no trailing spaces.                                                                                   |
 
 The formatting hooks change the files and fail the commit; add the changed files and commit again.
 
@@ -67,6 +68,7 @@ group (`uv sync --locked --only-group lint`), without the package or MPI, and ru
 | `ci.yml`             | All pushes and pull requests to `main` and `dev`           | deptry, unit tests (Linux and Windows)                                | `CI passed`             |
 | `extended.yml`       | Pull requests and pushes to `main`; manually on any branch | Verification and E2E tests; coverage (manual)                         | `Extended tests passed` |
 | `docs.yml`           | Pushes to `main` and all pull requests                     | Builds the docs; deploys them on `main`                               | `build`                 |
+| `audit.yml`          | Dependency changes to `main` and `dev`; weekly             | `uv audit` on the locked dependencies (all groups)                    | -                       |
 | `project-in-dev.yml` | Merged pull requests into `dev`                            | Moves the linked issues (`Part of #N`) to In dev on the project board | -                       |
 
 `ci.yml` and `extended.yml` start with a `changes` job (the shared `.github/actions/detect-code-changes` action), which
@@ -114,7 +116,8 @@ sync.
 `[tool.uv] constraint-dependencies` in `pyproject.toml` keeps `pymdown-extensions` below version 12, which is
 incompatible with the mkdocstrings version used for the API reference. `deptry` ignores `setuptools` for the "unused
 dependency" rule: nothing imports it, and its `<81` pin only keeps an installed mf2 working (mf2 imports
-`pkg_resources`) while `"module": "mf2"` is still supported in `Config.from_json`. Both go in version 2.0.0.
+`pkg_resources`) while `"module": "mf2"` is still supported in `Config.from_json`. Because of that pin, `audit.yml`
+ignores two setuptools advisories that are fixed only in later versions. All three go in version 2.0.0.
 
 To export the lock to a `requirements.txt` (e.g. for environments without uv):
 

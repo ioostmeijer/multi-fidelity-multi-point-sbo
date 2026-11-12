@@ -83,7 +83,7 @@ class DummySurrogate(SurrogateBase):
     def load_model_from_file(self, file_path: str) -> None:
         """Load the surrogate model from a file using pickle."""
         with open(file_path, "rb") as f:
-            loaded_model = pickle.load(f)
+            loaded_model = pickle.load(f)  # noqa: S301 (file written by the test)
         self._mu = loaded_model._mu
         self._optimum = loaded_model._optimum
         self.samples = loaded_model.samples

@@ -1,3 +1,4 @@
+import contextlib
 import logging
 from pathlib import Path
 from typing import Generator
@@ -26,10 +27,8 @@ def test_log_file_created(configure_test_logger: None) -> None:
 
     # flush handler(s) to ensure file writes are persisted
     for h in logger.handlers:
-        try:
+        with contextlib.suppress(Exception):
             h.flush()
-        except Exception:
-            pass
 
     files = _find_log_file(save_dir, f"{name}_")
     assert len(files) == 1
@@ -55,10 +54,8 @@ def test_log_message_format_includes_level_and_name(
     logger.info("hello world")
 
     for h in logger.handlers:
-        try:
+        with contextlib.suppress(Exception):
             h.flush()
-        except Exception:
-            pass
 
     files = _find_log_file(save_dir, f"{name}_")
     assert files, "No log file found"
@@ -89,10 +86,8 @@ def test_overwrite_truncates_previous_content(
     )
     logger1.info("first message")
     for h in logger1.handlers:
-        try:
+        with contextlib.suppress(Exception):
             h.flush()
-        except Exception:
-            pass
 
     # now re-create with overwrite=True which should truncate the same file
     logger2 = setup_logger(
@@ -105,10 +100,8 @@ def test_overwrite_truncates_previous_content(
     )
     logger2.info("second message")
     for h in logger2.handlers:
-        try:
+        with contextlib.suppress(Exception):
             h.flush()
-        except Exception:
-            pass
 
     files = _find_log_file(save_dir, f"{name}_job_42")
     assert files
@@ -137,10 +130,8 @@ def test_stream_handler_writes_to_stdout_and_no_file_created(
 
     # flush handlers to ensure stdout content is emitted
     for h in logger.handlers:
-        try:
+        with contextlib.suppress(Exception):
             h.flush()
-        except Exception:
-            pass
 
     captured = capfd.readouterr()
     assert "streamed message" in captured.out
