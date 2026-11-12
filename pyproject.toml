@@ -96,12 +96,16 @@ extend-exclude = ["*.md"]
 
 [tool.ruff.lint]
 # E/W: pycodestyle, F: pyflakes, B: bugbear, A: builtins, C4: comprehensions, ANN: annotations,
-# D: docstrings, I: import sorting (replaces isort).
-select = ["E", "W", "F", "B", "A", "C4", "ANN", "D", "I"]
+# D: docstrings, I: import sorting (replaces isort), S: flake8-bandit (security).
+select = ["E", "W", "F", "B", "A", "C4", "ANN", "D", "I", "S"]
 # D100: missing docstring in public module; D401: first line in imperative mood;
 # ANN002/ANN003: missing type annotation for *args/**kwargs.
 # (flake8's E203 and W503 conflicted with black; Ruff doesn't enable them. ANN101 was removed from Ruff.)
 ignore = ["D100", "D401", "ANN002", "ANN003"]
+
+[tool.ruff.lint.per-file-ignores]
+# S101: pytest uses plain `assert` statements.
+"tests/**" = ["S101"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
