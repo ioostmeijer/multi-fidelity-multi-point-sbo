@@ -68,6 +68,13 @@ with open("results/my_run.pkl", "rb") as f:
     data = pickle.load(f)
 ```
 
+!!! warning "Only load trusted files"
+
+    Loading a pickle file can run arbitrary code. Only load files that you saved yourself or otherwise trust. This also
+    applies to surrogate models saved with `save_model_to_file`. In version 2.0.0, both are saved in a data-only format that
+    is safe to load, and `.pkl` files from 1.x can no longer be loaded
+    ([#54](https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/issues/54)).
+
 ## Plotting
 
 For 1D and 2D problems, `plot_surrogate` draws the surrogate, the samples and the next sample location for each

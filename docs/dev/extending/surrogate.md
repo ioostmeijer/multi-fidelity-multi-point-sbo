@@ -38,6 +38,10 @@ fidelity.
 | `self._correct_x_shape(x)`                                                                   | Returns `x` with shape `(n_points, n_dimensions)`; a 1D array is one point (or, in 1D, a column of points).                                                |
 | `save_model()`, `load_model(data)`, `save_model_to_file(path)`, `load_model_from_file(path)` | Save and restore the model and its samples.                                                                                                                |
 
+`save_model_to_file` and `load_model_from_file` use pickle, which can run arbitrary code while loading. In version 2.0.0
+they will save only data (samples, optimum and fitted hyperparameters) and rebuild the model on load, so each surrogate
+will export and rebuild its own model ([#54](https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/issues/54)).
+
 Seed every random choice of the model with `self.config.get("random_seed")` (or use `self.config.rng`) so runs are
 reproducible.
 
