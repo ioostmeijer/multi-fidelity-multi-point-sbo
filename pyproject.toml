@@ -75,6 +75,12 @@ dev = [
     "deptry",
 ]
 
+# Session runner for the tests, lint and docs (noxfile.py), used locally and in CI. Each session installs its own
+# group from uv.lock into its own environment. Run with `uv run --only-group nox nox -s <session>`.
+nox = [
+    "nox",
+]
+
 [project.urls]
 Repository = "https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo"
 Documentation = "https://ioostmeijer.github.io/multi-fidelity-multi-point-sbo/"
