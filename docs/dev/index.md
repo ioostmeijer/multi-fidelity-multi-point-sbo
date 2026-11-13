@@ -29,6 +29,14 @@ pytest -m e2e                               # end-to-end tests
 mpiexec -n 4 python -m pytest --with-mpi -p no:xdist -m "mpi or mock_mpi"   # MPI tests
 ```
 
+The same checks run in CI through the [nox sessions](testing.md#nox-sessions) in `noxfile.py`, each in its own
+environment with the locked versions from `uv.lock`, and with the tests on every supported Python version:
+
+```bash
+uv run --only-group nox nox                 # lint, deptry, docs, and the unit tests on Python 3.11 and 3.14
+uv run --only-group nox nox -s tests-3.11   # one session; `nox --list` shows them all
+```
+
 See [Testing](testing.md) for what each level covers.
 
 ### Pre-commit Hooks
@@ -58,9 +66,13 @@ packages (`scipy.optimize`, `color=`) and the titles of cited papers keep their 
 
 ## Continuous Integration
 
-The GitHub Actions workflows are in `.github/workflows/`. The test and docs workflows install the locked environment
-from `uv.lock` (via the shared `.github/actions/setup-env` action); the Lint workflow installs only the locked `lint`
-group (`uv sync --locked --only-group lint`), without the package or MPI, and runs the hooks with it.
+The GitHub Actions workflows are in `.github/workflows/`. Their steps run the [nox sessions](testing.md#nox-sessions)
+(`uv run --locked --only-group nox nox -s <session>`), so the commands are defined in one place, `noxfile.py`, and run
+the same way locally. Each session installs the locked dependencies of its group from `uv.lock`; the `lint` session
+installs only the hook tools, without the package or MPI. The test and docs workflows first run the shared
+`.github/actions/setup-env` action, which installs uv, Python, MPI (Linux) and nox; the OS-specific setup, such as MPI
+and the Windows long-paths fix, stays in the workflows. Each test job keeps its own operating system and Python version
+from the matrix and runs one session, e.g. `nox -s "tests-${{ matrix.python-version }}"`.
 
 | Workflow             | Runs on                                                    | Jobs                                                                  | Required check          |
 | -------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------- | ----------------------- |
@@ -72,12 +84,12 @@ group (`uv sync --locked --only-group lint`), without the package or MPI, and ru
 | `project-in-dev.yml` | Merged pull requests into `dev`                            | Moves the linked issues (`Part of #N`) to In dev on the project board | -                       |
 
 `ci.yml` and `extended.yml` start with a `changes` job (the shared `.github/actions/detect-code-changes` action), which
-checks whether `src/`, `tests/`, `pyproject.toml`, `uv.lock`, the shared actions or the workflow itself changed. If not,
-for example in a documentation-only pull request, the tests are skipped. Each of these workflows ends with a summary job
-(`CI passed`, `Extended tests passed`) that fails if any of its jobs failed or was cancelled, and passes if they passed
-or were skipped. Branch protection on `main` requires only the summary jobs, `pre-commit` and `build`, so a
-documentation-only pull request can be merged within a minute, while a pull request that changes code has to pass every
-test.
+checks whether `src/`, `tests/`, `pyproject.toml`, `uv.lock`, `noxfile.py`, the shared actions or the workflow itself
+changed. If not, for example in a documentation-only pull request, the tests are skipped. Each of these workflows ends
+with a summary job (`CI passed`, `Extended tests passed`) that fails if any of its jobs failed or was cancelled, and
+passes if they passed or were skipped. Branch protection on `main` requires only the summary jobs, `pre-commit` and
+`build`, so a documentation-only pull request can be merged within a minute, while a pull request that changes code has
+to pass every test.
 
 The extended tests are slow, so they run on a pull request to `main` only once it is out of draft. Open the pull request
 as a draft while you are still pushing to it, then mark it **Ready for review** to run them; a later push cancels the
@@ -91,8 +103,9 @@ Dependencies are declared in `pyproject.toml`:
 - runtime dependencies under `[project] dependencies`;
 - the `benchmarks` extra under `[project.optional-dependencies]`: deprecated and empty since the benchmark problems are
     part of the package (`sbo.benchmarks`), kept until version 2.0.0 so existing install commands keep working;
-- the development-only `test`, `docs`, `lint` and `dev` groups under `[dependency-groups]` (`dev` includes `test`,
-    `docs` and `lint`; `lint` holds the pre-commit hook tools).
+- the development-only `test`, `docs`, `lint`, `dev` and `nox` groups under `[dependency-groups]` (`dev` includes
+    `test`, `docs` and `lint`; `lint` holds the pre-commit hook tools; `nox` holds only nox, which runs the sessions in
+    `noxfile.py`).
 
 The exact versions of everything, including transitive dependencies, are pinned in `uv.lock`. Never edit `uv.lock` by
 hand.
@@ -116,8 +129,9 @@ sync.
 `[tool.uv] constraint-dependencies` in `pyproject.toml` keeps `pymdown-extensions` below version 12, which is
 incompatible with the mkdocstrings version used for the API reference. `deptry` ignores `setuptools` for the "unused
 dependency" rule: nothing imports it, and its `<81` pin only keeps an installed mf2 working (mf2 imports
-`pkg_resources`) while `"module": "mf2"` is still supported in `Config.from_json`. Because of that pin, `audit.yml`
-ignores two setuptools advisories that are fixed only in later versions. All three go in version 2.0.0.
+`pkg_resources`) while `"module": "mf2"` is still supported in `Config.from_json`. Because of that pin, the `audit`
+session in `noxfile.py` (run by `audit.yml`) ignores two setuptools advisories that are fixed only in later versions.
+All three go in version 2.0.0.
 
 To export the lock to a `requirements.txt` (e.g. for environments without uv):
 
