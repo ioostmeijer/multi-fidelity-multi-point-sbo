@@ -2,15 +2,16 @@ name: Audit
 
 # Checks the locked dependencies (uv.lock, all groups) for known vulnerabilities with `uv audit` (OSV advisory database).
 # Runs when the dependencies change, and weekly, as new advisories appear for unchanged dependencies.
-# Locally: `uv audit --locked`.
+# Runs the `audit` nox session (noxfile.py), which also lists the ignored advisories. Locally:
+# `uv run --only-group nox nox -s audit`.
 
 on:
   push:
     branches: [ main, dev ]
-    paths: [ 'uv.lock', 'pyproject.toml', '.github/workflows/audit.yml' ]
+    paths: [ 'uv.lock', 'pyproject.toml', 'noxfile.py', '.github/workflows/audit.yml' ]
   pull_request:
     branches: [ main, dev ]
-    paths: [ 'uv.lock', 'pyproject.toml', '.github/workflows/audit.yml' ]
+    paths: [ 'uv.lock', 'pyproject.toml', 'noxfile.py', '.github/workflows/audit.yml' ]
   schedule:
     - cron: "0 4 * * 1"   # Mondays 04:00 UTC
   workflow_dispatch:
@@ -33,11 +34,5 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
 
-      # Ignored: two setuptools advisories (sdist on macOS; legacy wheel install on Windows), fixed in setuptools 83/84.
-      # setuptools stays <81 while "module": "mf2" is supported (see pyproject.toml); remove both ignores with that pin
-      # in version 2.0.0.
       - name: Run uv audit
-        run: >
-          uv audit --locked --preview-features audit-command
-          --ignore PYSEC-2026-3447
-          --ignore GHSA-xmj3-9gf7-h52w
+        run: uv run --locked --only-group nox nox -s audit

@@ -1,6 +1,7 @@
 name: CI
 
 # Unit tests and deptry, only when code or dependencies change. Linting (pre-commit) is in lint.yml.
+# The steps run the sessions in noxfile.py, so the same commands run locally.
 
 on:
   push:
@@ -33,7 +34,7 @@ jobs:
         id: detect
         uses: ./.github/actions/detect-code-changes
         with:
-          pattern: '^(src/|tests/|uv\.lock$|pyproject\.toml$|\.github/actions/|\.github/workflows/ci\.yml$)'
+          pattern: '^(src/|tests/|uv\.lock$|pyproject\.toml$|noxfile\.py$|\.github/actions/|\.github/workflows/ci\.yml$)'
 
   test:
     needs: changes
@@ -65,23 +66,14 @@ jobs:
 
       - name: Check dependency declarations (deptry)
         if: runner.os == 'Linux' && matrix.python-version == '3.14'
-        run: deptry src
+        run: uv run --locked --only-group nox nox -s deptry
 
       - name: Run non-MPI unit tests
-        shell: bash
-        run: |
-          python -m pytest \
-            -n 2 \
-            --dist=loadscope \
-            --max-worker-restart=0 \
-            -m 'unit and not (mpi or mock_mpi)' \
-            -q
+        run: uv run --locked --only-group nox nox -s "tests-${{ matrix.python-version }}"
 
       - name: Run MPI unit tests (Linux only)
         if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          mpiexec -n 2 python -m pytest --with-mpi -p no:xdist -m '(mpi or mock_mpi) and unit' -q
+        run: uv run --locked --only-group nox nox -s "tests_mpi-${{ matrix.python-version }}"
 
   ci-passed:
     name: CI passed

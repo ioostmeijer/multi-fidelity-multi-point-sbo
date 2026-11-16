@@ -27,6 +27,12 @@ All notable changes to this project are listed in this file. The format is based
 - Dependabot opens a monthly pull request into `dev` that updates the Python packages in `uv.lock` (grouped), within the
     version ranges in `pyproject.toml`. `v1.0.0` keeps the environment used for the thesis results. The quarterly GitHub
     Actions updates now also go into `dev` instead of `main`.
+- A `noxfile.py` with a nox session for every check: the unit tests on Python 3.11 to 3.14 (`tests-3.11` ...
+    `tests-3.14`), the MPI unit tests, the verification and end-to-end tests (with and without MPI), coverage, `lint`
+    (pre-commit), `docs`, `deptry` and `audit`. Each session installs its locked dependency group from `uv.lock` into
+    its own environment. The workflows run these sessions, so the same commands run locally and in CI. nox is in the new
+    `nox` dependency group: `uv run --only-group nox nox -s <session>`. This replaces the manual `.venv-*` environments
+    for testing other Python versions.
 
 ## [1.1.0] - 2026-11-10
 

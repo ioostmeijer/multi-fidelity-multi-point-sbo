@@ -25,9 +25,8 @@ jobs:
         with:
           python-version: "3.14"
 
-      - run: mkdocs build --strict
-        env:
-          DISABLE_MKDOCS_2_WARNING: "true"
+      - name: Build the docs
+        run: uv run --locked --only-group nox nox -s docs
 
   deploy:
     needs: build
@@ -51,6 +50,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - run: mkdocs gh-deploy --force --strict
-        env:
-          DISABLE_MKDOCS_2_WARNING: "true"
+      # The docs session with other mkdocs arguments (instead of `build --strict`).
+      - name: Deploy the docs
+        run: uv run --locked --only-group nox nox -s docs -- gh-deploy --force --strict

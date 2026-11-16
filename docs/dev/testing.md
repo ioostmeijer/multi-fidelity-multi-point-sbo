@@ -50,22 +50,44 @@ The package supports Python 3.11 to 3.14 (`requires-python = ">=3.11,<3.15"`). T
 | `extended.yml` | MPI verification, MPI end-to-end tests and coverage (Linux)                            | 3.14                   |
 | `lint.yml`     | pre-commit; `docs.yml`: building the docs; `ci.yml`: deptry (once, on Linux with 3.14) | 3.14                   |
 
-The development environment (`.venv`) uses the version in `.python-version`. To test another version locally without
-replacing `.venv`, create one environment per version (`.venv-*` is in `.gitignore`). Testing the lowest and the highest
-version is enough; the CI covers the versions in between. In Git Bash:
+The development environment (`.venv`) uses the version in `.python-version`. To test the other versions locally, use the
+nox sessions below: each version gets its own environment. Testing the lowest and the highest version (`tests-3.11`,
+`tests-3.14`) is enough; the CI covers the versions in between.
+
+## nox Sessions
+
+`noxfile.py` defines a [nox](https://nox.thea.codes/) session for every check that CI runs, and the workflows run these
+sessions, so a check runs the same way locally and in CI. Each session has its own environment in `.nox/` (created with
+uv, which also downloads a missing Python version) and installs the locked versions of its dependency group from
+`uv.lock` into it (`uv sync --locked`), so it doesn't touch `.venv`. nox itself is in the `nox` dependency group:
 
 ```bash
-for v in 3.11 3.14; do
-  UV_PROJECT_ENVIRONMENT=.venv-$v uv sync --locked --python $v
-  .venv-$v/Scripts/python.exe -m pytest -m unit -n auto -q
-done
-
-# The slow and the MPI tests on one version
-.venv-3.14/Scripts/python.exe -m pytest -m verification -n auto -q
-mpiexec -n 2 .venv-3.14/Scripts/python.exe -m pytest --with-mpi -p no:xdist -m "(mpi or mock_mpi) and unit"
+uv run --only-group nox nox --list                    # all sessions
+uv run --only-group nox nox                           # lint, deptry, tests-3.11, tests-3.14 and docs
+uv run --only-group nox nox -s tests-3.14             # one session
+uv run --only-group nox nox -s tests                  # unit tests on all four versions
+uv run --only-group nox nox -s tests-3.14 -- -k plot  # arguments after -- go to pytest
 ```
 
-On Linux and macOS, the interpreter is `.venv-$v/bin/python` instead.
+| Session                       | Runs                                                                 | Python versions        | In CI          |
+| ----------------------------- | -------------------------------------------------------------------- | ---------------------- | -------------- |
+| `tests`                       | Unit tests without MPI, in parallel (`-n auto`)                      | 3.11, 3.12, 3.13, 3.14 | `ci.yml`       |
+| `tests_mpi`                   | Unit tests with MPI and mock MPI (`mpiexec -n 2`, `--with-mpi`)      | 3.11, 3.12, 3.13, 3.14 | `ci.yml`       |
+| `verification`, `e2e`         | Verification and end-to-end tests without MPI                        | 3.11 and 3.14          | `extended.yml` |
+| `verification_mpi`, `e2e_mpi` | Verification and end-to-end tests with MPI and mock MPI              | 3.14                   | `extended.yml` |
+| `coverage`                    | All tests with coverage, with and without MPI; writes `coverage.xml` | 3.14                   | `extended.yml` |
+| `lint`                        | The pre-commit hooks on all files                                    | 3.14                   | `lint.yml`     |
+| `docs`                        | `mkdocs build --strict` (`-- serve` for a live preview)              | 3.14                   | `docs.yml`     |
+| `deptry`                      | `deptry src`                                                         | 3.14                   | `ci.yml`       |
+| `audit`                       | `uv audit --locked` (with the ignored advisories, see `noxfile.py`)  | (no environment)       | `audit.yml`    |
+
+The MPI sessions (`tests_mpi`, `verification_mpi`, `e2e_mpi`, `coverage`) need `mpiexec` on the PATH: MS-MPI on Windows,
+MPICH or Open MPI on Linux. On Windows without `mpiexec`, the other test sessions uninstall mpi4py from their
+environment, as it can't load without MS-MPI (the same as on Windows CI). The OS-specific setup stays in the workflows:
+installing MPI (in `.github/actions/setup-env`) and the Windows long-paths fix.
+
+The environments are reused between runs, and `uv sync --locked` updates them when `uv.lock` changes; delete `.nox/` to
+start fresh. For a quick run while working on the code, `uv run pytest ...` in `.venv` (above) is still the fastest.
 
 !!! note "Precision limits"
 

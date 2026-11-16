@@ -47,7 +47,7 @@ jobs:
         id: detect
         uses: ./.github/actions/detect-code-changes
         with:
-          pattern: '^(src/|tests/|uv\.lock$|pyproject\.toml$|\.github/actions/|\.github/workflows/extended\.yml$)'
+          pattern: '^(src/|tests/|uv\.lock$|pyproject\.toml$|noxfile\.py$|\.github/actions/|\.github/workflows/extended\.yml$)'
 
   verification:
     name: Verification (${{ matrix.os }}, Python ${{ matrix.python-version }})
@@ -79,14 +79,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Run non-MPI verification
-        shell: bash
-        run: |
-          python -m pytest \
-            -n 2 \
-            --dist=loadscope \
-            --max-worker-restart=0 \
-            -m 'verification and not (mpi or mock_mpi)' \
-            -q
+        run: uv run --locked --only-group nox nox -s "verification-${{ matrix.python-version }}"
 
   verification-mpi:
     name: Verification MPI (ubuntu-latest)
@@ -109,9 +102,7 @@ jobs:
           python-version: "3.14"
 
       - name: Run MPI verification
-        shell: bash
-        run: |
-          mpiexec -n 2 python -m pytest --with-mpi -p no:xdist -m 'verification and (mpi or mock_mpi)' -q
+        run: uv run --locked --only-group nox nox -s verification_mpi
 
   e2e:
     name: E2E (${{ matrix.os }}, Python ${{ matrix.python-version }})
@@ -143,9 +134,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Run non-MPI E2E tests
-        shell: bash
-        run: |
-          python -m pytest -m 'e2e and not (mpi or mock_mpi)'
+        run: uv run --locked --only-group nox nox -s "e2e-${{ matrix.python-version }}"
 
   e2e-mpi:
     name: E2E MPI (ubuntu-latest)
@@ -168,9 +157,7 @@ jobs:
           python-version: "3.14"
 
       - name: Run MPI E2E tests
-        shell: bash
-        run: |
-          mpiexec -n 2 python -m pytest --with-mpi -p no:xdist -m 'e2e and (mpi or mock_mpi)'
+        run: uv run --locked --only-group nox nox -s e2e_mpi
 
   coverage:
     name: Coverage (ubuntu-latest)
@@ -186,30 +173,9 @@ jobs:
         with:
           python-version: "3.14"
 
-      - name: Coverage non-MPI
-        run: |
-          python -m pytest \
-            --dist=loadscope \
-            --max-worker-restart=0 \
-            -m 'not (mpi or mock_mpi)' \
-            --cov=sbo \
-            --cov-append \
-            -q
-
-      - name: Coverage MPI
-        run: |
-          mpiexec -n 2 python -m coverage run \
-            --parallel-mode \
-            -m pytest \
-            -p no:xdist \
-            -m '(mpi or mock_mpi)' \
-            -q
-
-      - name: Combine coverage data
-        run: |
-          python -m coverage combine --append
-          python -m coverage xml
-          python -m coverage report
+      # Non-MPI and MPI tests, combined into coverage.xml.
+      - name: Run coverage
+        run: uv run --locked --only-group nox nox -s coverage
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v7

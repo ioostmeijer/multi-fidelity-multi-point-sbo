@@ -1,5 +1,5 @@
 name: Set up environment
-description: Install uv, Python, MPI (Linux only) and the locked dependencies from uv.lock
+description: Install uv, Python, MPI (Linux only) and nox from uv.lock; each nox session installs its own locked dependencies
 
 inputs:
   python-version:
@@ -18,37 +18,21 @@ runs:
           uv.lock
           pyproject.toml
 
+    # The nox sessions build mpi4py from source against MPICH (the variables below are passed on to their `uv sync`).
+    # On Windows there is no MPI: the test sessions uninstall mpi4py when no mpiexec is found (see noxfile.py).
     - name: Install MPI (Linux)
       if: runner.os == 'Linux'
       shell: bash
       run: |
         sudo apt-get update
         sudo apt-get install -y mpich libmpich-dev
+        {
+          echo "MPICC=mpicc"
+          echo "MPI4PY_MPI=mpich"
+          echo "UV_NO_BINARY_PACKAGE=mpi4py"
+        } >> "$GITHUB_ENV"
 
-    - name: Install locked dependencies (Linux)
-      if: runner.os == 'Linux'
+    # Only the `nox` group (.venv); run the sessions with `uv run --locked --only-group nox nox -s <session>`.
+    - name: Install nox
       shell: bash
-      env:
-        MPICC: mpicc
-        MPI4PY_MPI: mpich
-        UV_NO_BINARY_PACKAGE: mpi4py
-      run: uv sync --locked
-
-    - name: Install locked dependencies (Windows)
-      if: runner.os == 'Windows'
-      shell: bash
-      run: |
-        uv sync --locked
-        uv pip uninstall mpi4py
-
-    # Put the venv on PATH so later steps can call python/pytest/deptry/mkdocs directly
-    # (without `uv run`, which would re-sync and reinstall mpi4py on Windows).
-    - name: Activate virtual environment
-      shell: bash
-      run: |
-        if [ "$RUNNER_OS" = "Windows" ]; then
-          echo "$GITHUB_WORKSPACE/.venv/Scripts" >> "$GITHUB_PATH"
-        else
-          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
-        fi
-        echo "VIRTUAL_ENV=$GITHUB_WORKSPACE/.venv" >> "$GITHUB_ENV"
+      run: uv sync --locked --only-group nox
