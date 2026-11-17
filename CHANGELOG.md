@@ -6,6 +6,11 @@ All notable changes to this project are listed in this file. The format is based
 
 ## [Unreleased]
 
+### Added
+
+- The package ships a `py.typed` file ([PEP 561](https://peps.python.org/pep-0561/)), so type checkers such as mypy use
+    its type hints in projects that use it.
+
 ### Changed
 
 - The README and the documentation mark `CoKRG` and `FilteredGEI` as planned for 1.4.0 and `CEI` for 1.5.0, instead of
@@ -13,6 +18,9 @@ All notable changes to this project are listed in this file. The format is based
 
 ### Development
 
+- A `mypy` pre-commit hook (in the `lint` group, so also in `lint.yml`) type checks the package, configured in
+    `pyproject.toml`. The modules that still have type errors are listed in an `ignore_errors` baseline, to be removed
+    module by module. The `lint` nox session now also installs the dependencies of the package, which mypy needs.
 - Ruff replaces black, isort and flake8 (with its five plugins) for linting, import sorting and formatting, configured
     in `pyproject.toml`. The code is reformatted with Ruff, and the findings it reports that flake8 missed are fixed
     (`raise ... from`, `zip(..., strict=...)` and misplaced `noqa` comments).
