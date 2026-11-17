@@ -4,3 +4,6 @@
 # HPC scripts run on Linux: always check out with LF line endings
 *.sh text eol=lf
 *.def text eol=lf
+
+# Ensure consistent .md line endings
+*.md text eol=lf
