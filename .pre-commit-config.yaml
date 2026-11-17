@@ -1,5 +1,6 @@
 # The hooks run the tools installed in the uv environment (the `lint` group in pyproject.toml), so their versions are
-# set in one place only: uv.lock. Install them with `uv sync --locked` (or `uv sync --locked --only-group lint`).
+# set in one place only: uv.lock. Install them with `uv sync --locked`, or only them and the dependencies of the package
+# (which mypy needs) with `uv sync --locked --no-install-project --no-default-groups --group lint`.
 # `--no-sync` makes `uv run` use the environment as it is, without installing the full project first.
 repos:
   - repo: local
@@ -17,6 +18,15 @@ repos:
         entry: uv run --no-sync ruff format --force-exclude
         language: system
         types_or: [python, pyi]
+        require_serial: true
+
+      - id: mypy
+        name: mypy
+        entry: uv run --no-sync mypy
+        language: system
+        types_or: [python, pyi]
+        files: ^src/
+        pass_filenames: false
         require_serial: true
 
       # Markdown formatting: wrap at 120 characters, consistent lists and aligned tables.

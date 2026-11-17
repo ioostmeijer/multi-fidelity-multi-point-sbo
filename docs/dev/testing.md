@@ -76,7 +76,7 @@ uv run --only-group nox nox -s tests-3.14 -- -k plot  # arguments after -- go to
 | `verification`, `e2e`         | Verification and end-to-end tests without MPI                        | 3.11 and 3.14          | `extended.yml` |
 | `verification_mpi`, `e2e_mpi` | Verification and end-to-end tests with MPI and mock MPI              | 3.14                   | `extended.yml` |
 | `coverage`                    | All tests with coverage, with and without MPI; writes `coverage.xml` | 3.14                   | `extended.yml` |
-| `lint`                        | The pre-commit hooks on all files                                    | 3.14                   | `lint.yml`     |
+| `lint`                        | The pre-commit hooks on all files, including mypy                    | 3.14                   | `lint.yml`     |
 | `docs`                        | `mkdocs build --strict` (`-- serve` for a live preview)              | 3.14                   | `docs.yml`     |
 | `deptry`                      | `deptry src`                                                         | 3.14                   | `ci.yml`       |
 | `audit`                       | `uv audit --locked` (with the ignored advisories, see `noxfile.py`)  | (no environment)       | `audit.yml`    |
