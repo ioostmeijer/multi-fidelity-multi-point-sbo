@@ -66,6 +66,9 @@ lint = [
     "mdformat-tables",
     "codespell",
     "mypy",
+    # Type hints for scipy, which has none itself; for mypy. Its version follows scipy's
+    # (1.18.1.x for scipy 1.18.1).
+    "scipy-stubs",
 ]
 
 # Full dev requirements for development, including testing, documentation and linting
@@ -133,19 +136,14 @@ ignore-regex = '''\.(optimize|initialize|capitalize)\b|\bcolor\s*[=:]|["'](color
 
 [tool.mypy]
 # Run as a pre-commit hook on the whole package (also in the `lint` nox session).
-# The target version is the oldest supported Python, as for Ruff.
+# The target version is the oldest supported Python, as for Ruff. All dependencies have
+# type hints: scipy through scipy-stubs (in the `lint` group), the others themselves.
 files = ["src/sbo"]
 python_version = "3.11"
 check_untyped_defs = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
-
-[[tool.mypy.overrides]]
-# scipy has no type hints (py.typed); the other dependencies, smt and mpi4py included,
-# have them. scipy-stubs would add them, but isn't needed while this baseline lasts.
-module = ["scipy.*"]
-ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 # Baseline: the modules that still have type errors. Fix the errors of a module, then
