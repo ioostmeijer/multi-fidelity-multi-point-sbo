@@ -163,8 +163,6 @@ module = [
     "sbo.surrogate.Base",
     "sbo.surrogate.HK",
     "sbo.utils.Config",
-    "sbo.utils.Logger",
-    "sbo.utils.validate_settings",
 ]
 ignore_errors = true
 
