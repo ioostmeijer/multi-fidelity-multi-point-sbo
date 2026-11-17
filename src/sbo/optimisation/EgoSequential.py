@@ -1,13 +1,9 @@
 import copy
 import time
 
-try:
-    from mpi4py import MPI
-except (ImportError, RuntimeError):
-    MPI = None
-
 from ..infill import InfillBase
 from ..surrogate import SurrogateBase
+from ..utils._mpi import MPI
 from .Base import OptimisationBase
 
 

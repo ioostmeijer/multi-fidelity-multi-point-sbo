@@ -9,11 +9,7 @@ import numpy as np
 from ..infill import InfillBase
 from ..surrogate import SurrogateBase
 from ..utils import Base
-
-try:
-    from mpi4py import MPI
-except (ImportError, RuntimeError):
-    MPI = None
+from ..utils._mpi import MPI
 
 
 class OptimisationBase(Base):

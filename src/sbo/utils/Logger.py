@@ -4,10 +4,7 @@ import sys
 import traceback
 from datetime import datetime
 
-try:
-    from mpi4py import MPI
-except (ImportError, RuntimeError):
-    MPI = None
+from ._mpi import MPI
 
 
 def setup_logger(

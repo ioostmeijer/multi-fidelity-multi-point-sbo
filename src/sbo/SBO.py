@@ -13,11 +13,7 @@ from .infill import InfillBase
 from .optimisation import OptimisationBase
 from .surrogate import SurrogateBase
 from .utils import Config
-
-try:
-    from mpi4py import MPI
-except (ImportError, RuntimeError):
-    MPI = None
+from .utils._mpi import MPI
 
 
 class SBO:
