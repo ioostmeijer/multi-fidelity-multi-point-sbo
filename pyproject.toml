@@ -154,7 +154,6 @@ module = [
     "sbo.optimisation.EgoAsync",
     "sbo.optimisation.EgoMPI",
     "sbo.optimisation.EgoSequential",
-    "sbo.surrogate.Base",
     "sbo.surrogate.HK",
     "sbo.utils.Config",
 ]
