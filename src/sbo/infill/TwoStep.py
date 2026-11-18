@@ -9,7 +9,7 @@ from ..surrogate import SurrogateBaseWithVariancePerFidelity
 from .Base import InfillBase
 
 
-class TwoStep(InfillBase):
+class TwoStep(InfillBase[SurrogateBaseWithVariancePerFidelity]):
     r"""Two-step infill strategy for multi-fidelity optimisation.
 
     This method utilises a two-step approach to determine the next sampling point:
@@ -83,10 +83,11 @@ class TwoStep(InfillBase):
         else:
             cls = attr
 
-        if cls is None or not inspect.isclass(cls):
+        if cls is None or not inspect.isclass(cls) or not issubclass(cls, InfillBase):
             msg = (
                 f"Single-fidelity infill strategy class '{single_fid_name}' "
-                f"not found or is not a class in module '{base_module.__name__}'"
+                "not found or is not an infill strategy class in module "
+                f"'{base_module.__name__}'"
             )
             self.config.logger.error(msg)
             raise ImportError(msg)
@@ -195,12 +196,11 @@ class TwoStep(InfillBase):
         # Ensure x is 2D for prediction
         x_row = np.asarray(x).reshape(1, -1)
 
-        mu_hf = surrogate.predict_values(x_row, fidelity=0)
-        var_hf = surrogate.predict_variance_fidelity(x_row, fidelity=0)
-
-        # Extract scalar values from arrays
-        mu_hf = float(np.ravel(mu_hf)[0])
-        var_hf = float(np.ravel(var_hf)[0])
+        # Scalar values of the predictions
+        mu_hf = float(np.ravel(surrogate.predict_values(x_row, fidelity=0))[0])
+        var_hf = float(
+            np.ravel(surrogate.predict_variance_fidelity(x_row, fidelity=0))[0]
+        )
 
         if var_hf == 0.0:
             var_hf = 1e-10  # Prevent division by zero
@@ -209,10 +209,10 @@ class TwoStep(InfillBase):
         accurate_fidelities = [0]
 
         for fid in range(1, self.config.num_fidelities):
-            mu_fid = surrogate.predict_values(x_row, fidelity=fid)
-            var_fid = surrogate.predict_variance_fidelity(x_row, fidelity=fid)
-            mu_fid = float(np.ravel(mu_fid)[0])
-            var_fid = float(np.ravel(var_fid)[0])
+            mu_fid = float(np.ravel(surrogate.predict_values(x_row, fidelity=fid))[0])
+            var_fid = float(
+                np.ravel(surrogate.predict_variance_fidelity(x_row, fidelity=fid))[0]
+            )
             if var_fid == 0.0:
                 var_fid = 1e-10  # Prevent division by zero
 

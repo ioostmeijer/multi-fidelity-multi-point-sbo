@@ -150,12 +150,6 @@ warn_unused_configs = true
 # remove it from this list, until it is empty (#13).
 module = [
     "sbo.SBO",
-    "sbo.infill.CEI",
-    "sbo.infill.EI",
-    "sbo.infill.FilteredGEI",
-    "sbo.infill.GEI",
-    "sbo.infill.Random",
-    "sbo.infill.TwoStep",
     "sbo.optimisation.Base",
     "sbo.optimisation.EgoAsync",
     "sbo.optimisation.EgoMPI",

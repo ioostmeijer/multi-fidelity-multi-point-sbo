@@ -5,7 +5,7 @@ from ..surrogate import SurrogateBaseWithVariance, SurrogateBaseWithVariancePerF
 from .Base import InfillBase
 
 
-class EI(InfillBase):
+class EI(InfillBase[SurrogateBaseWithVariance]):
     r"""Expected Improvement (EI) infill strategy.
 
     This infill strategy selects new points to sample based on the Expected Improvement

@@ -1,9 +1,10 @@
 import numpy as np
 
+from ..surrogate import SurrogateBase
 from .Base import InfillBase
 
 
-class Random(InfillBase):
+class Random(InfillBase[SurrogateBase]):
     """A random multi-fidelity infill strategy.
 
     This infill strategy generates a specified number of new points, divided randomly
@@ -53,12 +54,12 @@ class Random(InfillBase):
         else:
             fidelities = np.zeros((number_new_points,), dtype=int)
 
-        # Create list of new points with fidelity levels
-        new_points = [
+        # Create list of tasks (new points with their fidelity levels)
+        tasks = [
             self._return_nested_samples(
                 [{"coord": new_points[i], "fid": fidelities[i]}]
             )
             for i in range(len(new_points))
         ]
 
-        return new_points, float("inf")
+        return tasks, float("inf")

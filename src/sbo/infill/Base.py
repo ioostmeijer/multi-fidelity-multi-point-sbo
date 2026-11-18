@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Generic, TypeVar
 
 import numpy as np
 import scipy.stats.qmc
@@ -7,11 +7,19 @@ from scipy.optimize import differential_evolution
 from ..surrogate import SurrogateBase
 from ..utils import Base
 
+# The type of surrogate an infill strategy works with: SurrogateBase or a subclass.
+S = TypeVar("S", bound=SurrogateBase)
 
-class InfillBase(Base):
+
+class InfillBase(Base, Generic[S]):
     """Base class for the infill strategies.
 
-    This class is the base for the different implemented infill strategies.
+    This class is the base for the different implemented infill strategies. It is
+    generic in the type of surrogate the strategy works with: a subclass states the
+    surrogate it needs, e.g. ``class EI(InfillBase[SurrogateBaseWithVariance])``, and
+    its methods accept that type. This only affects type checking; which surrogates an
+    infill strategy accepts at runtime is checked by the strategy itself and by the
+    compatibility checks of the config.
     """
 
     def __init__(self, *args, **kwargs) -> None:
@@ -19,9 +27,7 @@ class InfillBase(Base):
         # Initialise the Base class
         super().__init__(*args, **kwargs)
 
-    def get_new_points(
-        self, surrogate: SurrogateBase
-    ) -> tuple[list[list[dict]], float]:
+    def get_new_points(self, surrogate: S) -> tuple[list[list[dict]], float]:
         """Generate new points based on the infill strategy.
 
         Parameters
@@ -45,7 +51,7 @@ class InfillBase(Base):
         self.config.logger.error("get_new_points method not implemented in subclass.")
         raise NotImplementedError("Must be implemented in subclass")
 
-    def __call__(self, surrogate: SurrogateBase) -> tuple[list[list[dict]], float]:
+    def __call__(self, surrogate: S) -> tuple[list[list[dict]], float]:
         """Call override, which calls the get_new_points method.
 
         Parameters
@@ -97,9 +103,7 @@ class InfillBase(Base):
             )
         return samples
 
-    def calc_infill_value(
-        self, x: np.ndarray, surrogate: SurrogateBase, *args, **kwargs
-    ) -> float:
+    def calc_infill_value(self, x: np.ndarray, surrogate: S, *args, **kwargs) -> float:
         """Calculate the infill value for a given point using a flexible context.
 
         Parameters
