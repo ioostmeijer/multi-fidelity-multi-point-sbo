@@ -152,7 +152,6 @@ module = [
     "sbo.SBO",
     "sbo.optimisation.EgoAsync",
     "sbo.optimisation.EgoMPI",
-    "sbo.optimisation.EgoSequential",
     "sbo.utils.Config",
 ]
 ignore_errors = true
