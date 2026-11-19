@@ -66,9 +66,11 @@ The formatting hooks change the files and fail the commit; add the changed files
 mypy checks the type hints of the package (`src/sbo`), configured under `[tool.mypy]` in `pyproject.toml`. The hook
 always checks the whole package (`uv run mypy`), not only the changed files. All dependencies have type hints: numpy,
 matplotlib, smt and mpi4py ship them, and scipy gets them from `scipy-stubs` (in the `lint` group), whose version
-follows scipy's. Not all modules pass yet: the modules in the `ignore_errors` override are the baseline. Fix the errors
-in one of them (`uv run mypy` after removing it from the list shows them), then remove it from the list, until the list
-is empty. A new module isn't added to it.
+follows scipy's. The whole package passes, so new code has to pass too. When fixing an error, prefer correcting the code
+or the annotation, or narrowing the type (e.g. `if x is None: raise ...`), over `typing.cast`. Use
+`# type: ignore[<code>]` only as a last resort, with a comment saying why; `warn_unused_ignores` reports it once it is
+no longer needed. On a signature that spans several lines, mypy reports the error on the `def` line, so the comment goes
+there.
 
 The package ships an empty `src/sbo/py.typed` ([PEP 561](https://peps.python.org/pep-0561/)), so mypy and other type
 checkers use its type hints in the projects that install it.
