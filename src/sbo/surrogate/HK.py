@@ -5,7 +5,7 @@ from smt.surrogate_models import KRG as SMT_KRG
 
 from ..DefaultSettings.surrogate.KRIGING import SMT_DEFAULT_NUGGET
 from ..utils import Config, get_logger
-from .Base import SurrogateBaseWithVariancePerFidelity
+from .Base import SurrogateBaseWithVariance, SurrogateBaseWithVariancePerFidelity
 
 
 class HK(SurrogateBaseWithVariancePerFidelity):
@@ -61,7 +61,10 @@ class HK(SurrogateBaseWithVariancePerFidelity):
 
     supports_fidelity_prediction = True
 
-    def __new__(cls, *args, **kwargs) -> "HK | SMT_KRG":
+    # HK(...) returns a KRG instance if num_fidelities is 1, which mypy does not allow
+    # for in __new__(...). SurrogateBaseWithVariance is the common base class for both
+    # HK and KRG.
+    def __new__(cls, *args, **kwargs) -> SurrogateBaseWithVariance:  # type: ignore[misc]
         """Create a new instance of the HK surrogate model.
 
         If the number of fidelities is 1, a KRG instance is returned instead, since the
@@ -69,8 +72,9 @@ class HK(SurrogateBaseWithVariancePerFidelity):
 
         Returns
         -------
-        HK | SMT_KRG
-            An instance of the HK surrogate model or KRG if num_fidelities is 1
+        SurrogateBaseWithVariance
+            An instance of the HK surrogate model or KRG if num_fidelities is 1.
+            SurrogateBaseWithVariance is the common base class for both HK and KRG.
 
         Raises
         ------
@@ -115,7 +119,9 @@ class HK(SurrogateBaseWithVariancePerFidelity):
             An empty dictionary to hold the trained model parameters.
         """
         # Set the LF model to a Kriging model
-        model = {fid: {} for fid in range(self.config.num_fidelities)}
+        model: dict[int, dict | SMT_KRG] = {
+            fid: {} for fid in range(self.config.num_fidelities)
+        }
         krg_instance = SMT_KRG(**self._get_krg_settings(self.config))
         model[self.config.num_fidelities - 1] = krg_instance
 
@@ -255,6 +261,9 @@ class HK(SurrogateBaseWithVariancePerFidelity):
                     )
 
             # 3. Compute the trained model parameters via Cholesky + QR
+            if theta_opt is None:
+                raise RuntimeError("No theta found by the multi-start optimisation.")
+
             try:
                 corr_matrix = self._calculate_corr_matrix(x_samples, theta=theta_opt)
                 chol = cholesky(corr_matrix, lower=True)
@@ -599,7 +608,7 @@ class HK(SurrogateBaseWithVariancePerFidelity):
             return None
 
     def _calculate_corr_vector(
-        self, x_in: np.ndarray, fidelity: int, theta: np.ndarray = None
+        self, x_in: np.ndarray, fidelity: int, theta: np.ndarray | None = None
     ) -> np.ndarray:
         """Calculate the correlation vector between input points and training points.
 
