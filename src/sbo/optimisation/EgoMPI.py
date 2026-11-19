@@ -32,9 +32,12 @@ class EgoMPI(OptimisationBase):
     All OptimisationBase attributes.
     """
 
-    def __new__(
+    # EgoMPI(...) returns EgoMPI or EgoSequential depending on the number of MPI
+    # processes available. MyPy does not understand this, so we ignore the type checking
+    # for this method.
+    def __new__(  # type: ignore[misc]
         cls, *args, mpi_comm: "MPI.Comm | None" = None, **kwargs
-    ) -> "EgoMPI | EgoSequential":
+    ) -> OptimisationBase:
         """Create an instance of the EgoMPI or EgoSequential class.
 
         This method returns an instance of the EgoMPI or EgoSequential class. If MPI and
@@ -101,7 +104,7 @@ class EgoMPI(OptimisationBase):
 
     def solve(
         self, surrogate: SurrogateBase, infill: InfillBase, *args, **kwargs
-    ) -> dict | None:
+    ) -> dict:
         """Run the MPI EGO Optimisation algorithm.
 
         Parameters
@@ -113,8 +116,9 @@ class EgoMPI(OptimisationBase):
 
         Returns
         -------
-        dict | None
-            The best point found on the coordinator process, None on worker processes.
+        dict
+            The best point found on the coordinator process,
+            empty dict on worker processes.
 
         Raises
         ------
@@ -180,7 +184,7 @@ class EgoMPI(OptimisationBase):
 
         # setup counters
         iteration = 0
-        best_point = {"coord": None, "value": float("inf")}
+        best_value = float("inf")
         curr_surr_opt = {"coord": None, "value": float("inf")}
         start_time = time()
         function_calls = dict.fromkeys(range(self.config.num_fidelities), 0)
@@ -190,7 +194,7 @@ class EgoMPI(OptimisationBase):
 
         while True:
             iteration_time = time()
-            prev_best = best_point
+            prev_best_value = best_value
             prev_surr_opt = curr_surr_opt
             self.config.logger.info(f"Starting iteration {iteration}")
 
@@ -239,6 +243,9 @@ class EgoMPI(OptimisationBase):
 
             # Gather results
             results = self.mpi_comm.gather(result, root=0)
+            if results is None:
+                self.config.logger.error("No results received from worker processes.")
+                raise RuntimeError("No results received from worker processes.")
             results = [point for task in results for point in task]
             self.config.logger.debug("Received results from worker processes.")
 
@@ -248,6 +255,7 @@ class EgoMPI(OptimisationBase):
 
             # Get best point from new surrogate
             best_point = min(surrogate.samples[0], key=lambda p: p["value"])
+            best_value = best_point["value"]
             curr_surr_opt = {**surrogate.get_optimum(fidelity=0), "fid": 0}
 
             # Update function calls
@@ -260,8 +268,8 @@ class EgoMPI(OptimisationBase):
             stop = self._run_end_iteration(
                 iteration=iteration,
                 function_calls=function_calls,
-                best_val=best_point["value"],
-                prev_best_val=prev_best["value"],
+                best_val=best_value,
+                prev_best_val=prev_best_value,
                 infill_value=infill_value,
                 best_coord=best_point["coord"],
                 surrogate=surrogate,
@@ -300,7 +308,7 @@ class EgoMPI(OptimisationBase):
         # return the optimum
         return best_point
 
-    def _solve_worker(self) -> None:
+    def _solve_worker(self) -> dict:
         """Solve the MPI EGO as worker.
 
         The worker receives tasks from the coordinator rank, calculates their values and
@@ -327,4 +335,4 @@ class EgoMPI(OptimisationBase):
             # Send the results
             self.mpi_comm.gather(result, root=0)
 
-        return
+        return {}

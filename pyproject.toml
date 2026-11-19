@@ -150,7 +150,6 @@ warn_unused_configs = true
 # remove it from this list, until it is empty (#13).
 module = [
     "sbo.SBO",
-    "sbo.optimisation.EgoMPI",
     "sbo.utils.Config",
 ]
 ignore_errors = true
