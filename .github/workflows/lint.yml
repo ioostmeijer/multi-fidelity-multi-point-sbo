@@ -1,9 +1,10 @@
 name: Lint
 
-# Runs the pre-commit hooks (Ruff lint and format, mdformat, codespell, whitespace and end-of-file fixes) on every push
-# and pull request, without a path filter, so documentation-only changes are checked as well. The hooks run the tools
-# from the `lint` dependency group at the versions in uv.lock, through the `lint` nox session (noxfile.py), which
-# installs only that group (not the package, and so not MPI). The slower tests are in ci.yml.
+# Runs the pre-commit hooks (Ruff lint and format, mypy, mdformat, codespell, whitespace and end-of-file fixes) on every
+# push and pull request, without a path filter, so documentation-only changes are checked as well. The hooks run the
+# tools from the `lint` dependency group at the versions in uv.lock, through the `lint` nox session (noxfile.py), which
+# installs that group and the dependencies of the package for mypy (mpi4py from its wheel; MPI itself isn't needed), but
+# not the package itself. The slower tests are in ci.yml.
 
 on:
   push:

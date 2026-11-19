@@ -242,12 +242,12 @@ class Config:
             raise ValueError(msg)
 
         self._scipy_constraints = []
-        for key, value in self._constraints["inexpensive"].items():
-            n_constr = len(value)
+        for key, funcs in self._constraints["inexpensive"].items():
+            n_constr = len(funcs)
             if key == "equality" and n_constr > 0:
                 self._scipy_constraints.append(
                     NonlinearConstraint(
-                        fun=self._vectorise(value),
+                        fun=self._vectorise(funcs),
                         lb=np.zeros(n_constr) - 1e-8,
                         ub=np.zeros(n_constr) + 1e-8,
                     )
@@ -255,7 +255,7 @@ class Config:
             elif key == "inequality" and n_constr > 0:
                 self._scipy_constraints.append(
                     NonlinearConstraint(
-                        fun=self._vectorise(value),
+                        fun=self._vectorise(funcs),
                         lb=-np.inf * np.ones(n_constr),
                         ub=np.zeros(n_constr),
                     )
@@ -1144,7 +1144,7 @@ class Config:
             raise ValueError("Not all ub > lb.")
 
     @classmethod
-    def from_json(cls: "Config", input_settings: str | dict) -> "Config":
+    def from_json(cls, input_settings: str | dict) -> "Config":
         """Create the singleton instance from a JSON file.
 
         The functions are set by the "functions" entry, with a "module" and an
@@ -1179,7 +1179,6 @@ class Config:
         if isinstance(input_settings, dict):
             input_dict = input_settings
         else:
-            input_dict = None
             with open(input_settings, "r") as f:
                 input_dict = json.load(f)
         resulting_config_dict = input_dict.copy()

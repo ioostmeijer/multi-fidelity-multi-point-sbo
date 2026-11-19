@@ -7,7 +7,7 @@ from ..surrogate import SurrogateBaseWithVariance
 from .Base import InfillBase
 
 
-class GEI(InfillBase):
+class GEI(InfillBase[SurrogateBaseWithVariance]):
     r"""Generalised Expected Improvement (GEI) infill strategy.
 
     This infill strategy selects new points to sample based on the Generalised Expected

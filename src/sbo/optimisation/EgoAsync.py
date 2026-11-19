@@ -1,14 +1,10 @@
 import copy
 import time
 
-try:
-    from mpi4py import MPI
-except (ImportError, RuntimeError):
-    MPI = None
-
 from ..infill import InfillBase
 from ..surrogate import SurrogateBase
 from ..utils import Config
+from ..utils._mpi import MPI
 from .Base import OptimisationBase
 from .EgoSequential import EgoSequential
 
@@ -40,9 +36,12 @@ class EgoAsync(OptimisationBase):
         The total number of MPI processes.
     """
 
-    def __new__(
+    # EgoAsync(...) returns EgoAsync or EgoSequential instance if there are not enough
+    # MPI processes available. Mypy does not allow this. OptimisationBase is used as a
+    # workaround to avoid mypy errors and is the baseclass for EgoAsync.
+    def __new__(  # type: ignore[misc]
         cls, *args, mpi_comm: "MPI.Comm | None" = None, **kwargs
-    ) -> "EgoAsync | EgoSequential":
+    ) -> OptimisationBase:
         """Create a new instance of EgoAsync or fallback to EgoSequential.
 
         Create a new instance of EgoAsync if there are at least 2 MPI processes
@@ -55,7 +54,7 @@ class EgoAsync(OptimisationBase):
 
         Returns
         -------
-        EgoAsync | EgoSequential
+        OptimisationBase
             An instance of EgoAsync or EgoSequential
 
         Raises
@@ -114,7 +113,7 @@ class EgoAsync(OptimisationBase):
 
     def solve(
         self, surrogate: SurrogateBase, infill: InfillBase, *args, **kwargs
-    ) -> dict | None:
+    ) -> dict:
         """Run the Asynchronous EGO Optimisation algorithm.
 
         Parameters
@@ -126,8 +125,9 @@ class EgoAsync(OptimisationBase):
 
         Returns
         -------
-        dict | None
-            The best point found on the coordinator process, None on worker processes.
+        dict
+            The best point found on the coordinator process, Empty dict on worker
+            processes.
 
         Raises
         ------
@@ -177,13 +177,13 @@ class EgoAsync(OptimisationBase):
         }
 
         # Setup catalogue of pending points and free workers
-        pending_points = []
+        pending_points: list[dict] = []
         # 0 is the coordinator and does not evaluate points, due to a limitation of the
         # Python GIL
         free_workers = list(range(1, self.mpi_size))
 
         # Setup solution data
-        best_point = {"coord": None, "value": float("inf")}
+        best_value = float("inf")
         curr_surr_opt = {"coord": None, "value": float("inf")}
         prev_surr_opt = {"coord": None, "value": float("inf")}
         infill_value = float("inf")
@@ -261,8 +261,9 @@ class EgoAsync(OptimisationBase):
                 surrogate_updated = True
 
                 # Update the best point
-                previous_best = best_point
+                previous_best_value = best_value
                 best_point = min(surrogate.samples[0], key=lambda p: p["value"])
+                best_value = best_point["value"]
                 prev_surr_opt = curr_surr_opt
                 curr_surr_opt = {**surrogate.get_optimum(), "fid": 0}
 
@@ -280,8 +281,8 @@ class EgoAsync(OptimisationBase):
                 stop = self._run_end_iteration(
                     iteration=iteration_key,
                     function_calls=function_calls,
-                    best_val=best_point["value"],
-                    prev_best_val=previous_best["value"],
+                    best_val=best_value,
+                    prev_best_val=previous_best_value,
                     infill_value=infill_value,
                     best_coord=best_point["coord"],
                     surrogate=surrogate,
@@ -379,7 +380,7 @@ class EgoAsync(OptimisationBase):
         # return the optimum
         return best_point
 
-    def _solve_worker(self) -> None:
+    def _solve_worker(self) -> dict:
         """Run the worker process to evaluate points.
 
         This process receives tasks from the coordinator process, evaluates them and
@@ -401,7 +402,7 @@ class EgoAsync(OptimisationBase):
                 f"Worker {self.mpi_rank} sending results ({results})"
             )
             self.mpi_comm.send(results, dest=0, tag=22)
-        return None
+        return {}
 
     def _add_tasks_to_workers(
         self,

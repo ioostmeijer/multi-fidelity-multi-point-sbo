@@ -139,9 +139,8 @@ def validate_settings(
                 if not isinstance(single_fid_infill, str):
                     # None or an invalid value: the value itself is validated (and
                     # replaced by the default) below, so use the default here
-                    single_fid_infill = default_settings_to_use.get(
-                        "single_fid_infill"
-                    ).get("default")
+                    single_fid_info = default_settings_to_use["single_fid_infill"]
+                    single_fid_infill = single_fid_info["default"]
                 single_fid_infill_def_sett_name = (
                     single_fid_infill.upper() + "_DEFAULT_SETTINGS"
                 )
@@ -173,12 +172,12 @@ def validate_settings(
 
 
 def check_value(
-    value: float | int | str | bool | list | dict,
+    value: float | int | str | bool | list | tuple | dict,
     value_info: dict,
     key: str,
     logger: logging.Logger | None = None,
     strict: bool = False,
-) -> float | int | str | bool | list | dict:
+) -> float | int | str | bool | list | tuple | dict:
     """Check if the settings value is valid.
 
     Parameters
@@ -200,7 +199,7 @@ def check_value(
 
     Returns
     -------
-    float | int | str | bool | list | dict
+    float | int | str | bool | list | tuple | dict
         Validated value, or the default value if the input value is invalid.
 
     Raises

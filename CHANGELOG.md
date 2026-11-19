@@ -6,13 +6,29 @@ All notable changes to this project are listed in this file. The format is based
 
 ## [Unreleased]
 
+### Added
+
+- The package ships a `py.typed` file ([PEP 561](https://peps.python.org/pep-0561/)), so type checkers such as mypy use
+    its type hints in projects that use it.
+
 ### Changed
 
 - The README and the documentation mark `CoKRG` and `FilteredGEI` as planned for 1.4.0 and `CEI` for 1.5.0, instead of
     "not implemented" or "not functional".
 
+### Fixed
+
+- `solve()` of `EgoSequential`, `EgoMPI` and `EgoAsync` returns an empty dict instead of `None` on MPI worker ranks,
+    like `SBO.run()`. Results through `SBO` and `sbo()` don't change.
+- A surrogate loaded with `load_model` from data without an `"optimum"` entry no longer fails in `get_optimum`.
+- The surrogate plots of `SBO` no longer fail when the optimisation data has no `"init"` entry.
+
 ### Development
 
+- A `mypy` pre-commit hook (in the `lint` group, so also in `lint.yml`) type checks the package, configured in
+    `pyproject.toml`. The whole package passes; the type errors found were fixed. The `lint` nox session now also
+    installs the dependencies of the package, which mypy needs, and the `lint` group has `scipy-stubs` for the types of
+    scipy.
 - Ruff replaces black, isort and flake8 (with its five plugins) for linting, import sorting and formatting, configured
     in `pyproject.toml`. The code is reformatted with Ruff, and the findings it reports that flake8 missed are fixed
     (`raise ... from`, `zip(..., strict=...)` and misplaced `noqa` comments).

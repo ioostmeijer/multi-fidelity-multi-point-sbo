@@ -2,18 +2,14 @@ import copy
 import os
 import pickle
 import time
-from typing import Any, Union
+from typing import Any, Callable, Union
 
 import numpy as np
 
 from ..infill import InfillBase
 from ..surrogate import SurrogateBase
 from ..utils import Base
-
-try:
-    from mpi4py import MPI
-except (ImportError, RuntimeError):
-    MPI = None
+from ..utils._mpi import MPI
 
 
 class OptimisationBase(Base):
@@ -24,7 +20,7 @@ class OptimisationBase(Base):
         super().__init__(*args, **kwargs)
 
         # Set up empty optimisation process data dict
-        _empty_per_iteration_dict = {
+        _empty_per_iteration_dict: dict[str, Any] = {
             "best_coord": None,
             "best_value": None,
             "infill_value": None,
@@ -594,7 +590,11 @@ class OptimisationBase(Base):
 
         # Get value to use as lie
         mode = self.config.get("optimisation.constant_liar_lie", "mean")
-        _funcs = {"mean": np.mean, "min": np.min, "max": np.max}
+        _funcs: dict[str, Callable[[list[float]], float]] = {
+            "mean": np.mean,
+            "min": np.min,
+            "max": np.max,
+        }
         if mode not in _funcs:
             self.config.logger.warning(
                 "Invalid constant_liar_lie configuration. Defaulting to 'mean'."
@@ -788,8 +788,9 @@ class OptimisationBase(Base):
             Whether the points are equal or not.
         """
         max_distance = (self.config.ub - self.config.lb) * 1e-4
-        return a["fid"] == b["fid"] and np.all(
-            np.isclose(a["coord"], b["coord"], atol=max_distance, rtol=0)
+        return bool(
+            a["fid"] == b["fid"]
+            and np.all(np.isclose(a["coord"], b["coord"], atol=max_distance, rtol=0))
         )
 
     def __call__(

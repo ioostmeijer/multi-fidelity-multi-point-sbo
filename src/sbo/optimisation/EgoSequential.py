@@ -1,13 +1,9 @@
 import copy
 import time
 
-try:
-    from mpi4py import MPI
-except (ImportError, RuntimeError):
-    MPI = None
-
 from ..infill import InfillBase
 from ..surrogate import SurrogateBase
+from ..utils._mpi import MPI
 from .Base import OptimisationBase
 
 
@@ -55,7 +51,7 @@ class EgoSequential(OptimisationBase):
             self.config.logger.info(
                 "EGO Sequential Optimisation is only run on the root process."
             )
-            return None
+            return {}
 
         # Save initial state to optimisation data
         self._optimisation_data["init"] = {
@@ -71,7 +67,7 @@ class EgoSequential(OptimisationBase):
 
         # Setup counters and timers
         iteration = 0
-        best_point = {"value": float("inf"), "coord": None, "fid": None}
+        best_value = float("inf")
         start_time = time.time()
         function_calls = dict.fromkeys(range(self.config.num_fidelities), 0)
         prev_surr_opt = {"value": float("inf"), "coord": None, "fid": None}
@@ -83,7 +79,7 @@ class EgoSequential(OptimisationBase):
 
             # Setup timer for the iteration and save previous best value
             iter_start_time = time.time()
-            prev_best = best_point
+            prev_best_value = best_value
 
             # get new points to evaluate
             new_points, infill_value = infill(surrogate)
@@ -104,14 +100,15 @@ class EgoSequential(OptimisationBase):
 
             # Get the current best value
             best_point = min(surrogate.samples[0], key=lambda p: p["value"])
+            best_value = best_point["value"]
             curr_surr_opt = {**surrogate.get_optimum(fidelity=0), "fid": 0}
 
             # Save the data and calculate stopping criteria
             stop = self._run_end_iteration(
                 iteration=iteration,
                 function_calls=function_calls,
-                best_val=best_point["value"],
-                prev_best_val=prev_best["value"],
+                best_val=best_value,
+                prev_best_val=prev_best_value,
                 infill_value=infill_value,
                 best_coord=best_point["coord"],
                 surrogate=surrogate,

@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..surrogate import CoKRG
+from ..surrogate import CoKRG, SurrogateBaseWithVariance
 from ..utils import Config, get_logger
 from .GEI import GEI
 
@@ -43,7 +43,9 @@ class FilteredGEI(GEI):
     Available: https://link.springer.com/article/10.1007/s00158-021-02931-1.
     """
 
-    def __new__(cls, *args, **kwargs) -> "FilteredGEI | GEI":
+    # FilteredGEI(...) returns a GEI (its base class) with one fidelity, which mypy
+    # doesn't allow for __new__; the return type GEI is correct for both cases.
+    def __new__(cls, *args, **kwargs) -> GEI:  # type: ignore[misc]
         """Create a new instance of FilteredGEI or GEI based on number of fidelities.
 
         If the number of fidelities is 1, return an instance of GEI. Otherwise, return
@@ -59,7 +61,7 @@ class FilteredGEI(GEI):
         ValueError
             If no config is passed as keyword argument.
         """
-        config: Config = kwargs.get("config")
+        config: Config | None = kwargs.get("config")
         if config is None:
             (kwargs.get("logger") or get_logger()).error(
                 "Config object must be provided to FilteredGEI."
@@ -105,7 +107,7 @@ class FilteredGEI(GEI):
 
     def get_new_points(
         self,
-        surrogate: CoKRG,
+        surrogate: SurrogateBaseWithVariance,
         *args,
         samples_per_iteration: None | dict[int, list[float]] = None,
         **kwargs,
@@ -115,7 +117,8 @@ class FilteredGEI(GEI):
         Parameters
         ----------
         surrogate
-            The CoKriging surrogate model.
+            The CoKriging (CoKRG) surrogate model; typed as the GEI surrogate type, and
+            checked to be a CoKRG.
         samples_per_iteration
             A dictionary where keys are iteration indices and values are lists of
             sampled high-fidelity values in that iteration. If None, the mean of all

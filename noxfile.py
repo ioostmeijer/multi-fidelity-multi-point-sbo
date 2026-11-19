@@ -244,8 +244,10 @@ def coverage(session: nox.Session) -> None:
 
 @nox.session(python=DEFAULT_PYTHON)
 def lint(session: nox.Session) -> None:
-    """Pre-commit hooks on all files (Ruff, mdformat, codespell, whitespace)."""
-    _sync(session, "--only-group=lint")
+    """Pre-commit hooks on all files (Ruff, mypy, mdformat, codespell, whitespace)."""
+    # The lint tools and the dependencies of the package, which mypy needs for their
+    # types; not the package itself (mypy reads it from src/).
+    _sync(session, "--no-install-project", "--no-default-groups", "--group=lint")
     args = session.posargs or ["run", "--all-files", "--show-diff-on-failure"]
     # The hooks run `uv run --no-sync <tool>`: use this environment instead of .venv.
     session.run(

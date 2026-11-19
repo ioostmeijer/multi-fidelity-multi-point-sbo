@@ -2,7 +2,7 @@ import copy
 import os
 import pathlib
 import pickle
-from typing import Any
+from typing import Any, Literal, overload
 
 import numpy as np
 from scipy.optimize import differential_evolution
@@ -37,7 +37,7 @@ class SurrogateBase(Base):
         super().__init__(*args, **kwargs)
 
         self._trained: bool = False
-        self._optimum: dict = dict.fromkeys(range(self.config.num_fidelities), None)
+        self._optimum: dict[int, dict | None] = self._no_optimum()
         self.samples: dict = {fid: [] for fid in range(self.config.num_fidelities)}
         if initial_samples is not None:
             self.set_training_data(initial_samples)
@@ -151,8 +151,9 @@ class SurrogateBase(Base):
             raise ValueError(msg)
 
         # Check if the optimum of the current model has been calculated before
-        if self._trained and self._optimum[fidelity] is not None:
-            return self._optimum[fidelity]
+        cached_optimum = self._optimum[fidelity]
+        if self._trained and cached_optimum is not None:
+            return cached_optimum
 
         # Check if the model is trained
         if not self._trained:
@@ -162,9 +163,11 @@ class SurrogateBase(Base):
         # scipy_constr = self.config.scipy_constraints(
         #     return_inexpensive=True, return_surrogate=True
         # )
+        def _optim_function(x: np.ndarray, /) -> float:
+            return float(self.predict_values(np.array([x]), fidelity=fidelity).item())
 
         result = differential_evolution(
-            lambda x: self.predict_values(np.array([x]), fidelity=fidelity),
+            _optim_function,
             self.config.bounds,
             # constraints=scipy_constr,
             strategy=self.config.get("surrogate_opt_strategy", "best1bin"),
@@ -179,8 +182,9 @@ class SurrogateBase(Base):
             atol=self.config.get("surrogate_opt_atol", 0),
             seed=self.config.get("random_seed"),
         )
-        self._optimum[fidelity] = {"coord": result.x, "value": result.fun}
-        return self._optimum[fidelity]
+        optimum = {"coord": result.x, "value": result.fun}
+        self._optimum[fidelity] = optimum
+        return optimum
 
     def train(self) -> None:
         """Train the surrogate model using the provided training data.
@@ -197,7 +201,7 @@ class SurrogateBase(Base):
         self.config.logger.error(msg)
         raise NotImplementedError(msg)
 
-    def set_training_data(self, points: list[dict]) -> None:
+    def set_training_data(self, points: list[dict] | dict) -> None:
         """Set the training data for the surrogate model.
 
         This replaces the current samples. If you want to add samples, use
@@ -207,7 +211,10 @@ class SurrogateBase(Base):
         ----------
         points
             A list of dictionaries containing the training data points.
-            ({'coord': np.ndarray, 'fidelity': int, 'value': float})
+            ({'coord': np.ndarray, 'fid': int, 'value': float})
+            or a dictionary containing the training data points, with fidelity levels as
+            keys.
+            ({fid: list of dict, ...})
         """
         self.samples = {fid: [] for fid in range(self.config.num_fidelities)}
 
@@ -268,9 +275,19 @@ class SurrogateBase(Base):
             self.samples[fidelity].append(point)
 
         self._trained = False
-        self._optimum = dict.fromkeys(range(self.config.num_fidelities), None)
+        self._optimum = self._no_optimum()
 
-    def save_model(self) -> dict:  # noqa: ANN401
+    def _no_optimum(self) -> dict[int, dict | None]:
+        """Return the optimum cache with no optimum calculated for any fidelity.
+
+        Returns
+        -------
+        dict[int, dict | None]
+            None for each fidelity level.
+        """
+        return dict.fromkeys(range(self.config.num_fidelities), None)
+
+    def save_model(self) -> dict:
         """Serialise the surrogate model.
 
         Returns
@@ -287,7 +304,7 @@ class SurrogateBase(Base):
             "samples": copy.deepcopy(self.samples),
         }
 
-    def load_model(self, model_data: dict) -> None:  # noqa: ANN401
+    def load_model(self, model_data: dict) -> None:
         """Load the surrogate model from serialised data.
 
         Parameters
@@ -295,9 +312,9 @@ class SurrogateBase(Base):
         model_data
             dictionary containing the model data.
         """
-        self._model = copy.deepcopy(model_data.get("model"))
+        self._model = copy.deepcopy(model_data.get("model", {}))
         self._trained = model_data.get("trained", False)
-        self._optimum = copy.deepcopy(model_data.get("optimum"))
+        self._optimum = copy.deepcopy(model_data.get("optimum", self._no_optimum()))
         self.samples = copy.deepcopy(model_data.get("samples", {}))
         return
 
@@ -424,6 +441,25 @@ class SurrogateBase(Base):
 class SurrogateBaseWithVariance(SurrogateBase):
     """Base class for surrogate models that provide variance estimates."""
 
+    @overload
+    def predict(
+        self, x: np.ndarray, *args, return_variance: Literal[False], **kwargs
+    ) -> np.ndarray: ...
+
+    @overload
+    def predict(
+        self, x: np.ndarray, *args, return_variance: Literal[True] = ..., **kwargs
+    ) -> tuple[np.ndarray, np.ndarray]: ...
+
+    @overload
+    def predict(
+        self, x: np.ndarray, *args, return_variance: bool, **kwargs
+    ) -> tuple[np.ndarray, np.ndarray] | np.ndarray: ...
+
+    # Unlike SurrogateBase.predict, this returns (values, variance) by default, so code
+    # that expects SurrogateBase.predict to return the values has to pass
+    # return_variance=False. To be split into predict (values only) and a separate
+    # method for the variance in version 2.0.0.
     def predict(
         self, x: np.ndarray, *args, return_variance: bool = True, **kwargs
     ) -> tuple[np.ndarray, np.ndarray] | np.ndarray:

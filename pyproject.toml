@@ -65,6 +65,10 @@ lint = [
     "mdformat-mkdocs",
     "mdformat-tables",
     "codespell",
+    "mypy",
+    # Type hints for scipy, which has none itself; for mypy. Its version follows scipy's
+    # (1.18.1.x for scipy 1.18.1).
+    "scipy-stubs",
 ]
 
 # Full dev requirements for development, including testing, documentation and linting
@@ -129,6 +133,17 @@ ignore-words-list = "nd"
 # Names from other packages (scipy.optimize, smt's .optimize(), mermaid.initialize, str.capitalize, matplotlib's
 # color= and loc="center") and the titles of cited papers, which keep their American spelling.
 ignore-regex = '''\.(optimize|initialize|capitalize)\b|\bcolor\s*[=:]|["'](color|center)["']|variable-fidelity surrogate modeling|Surrogate Modeling Toolbox|Optimization and Uncertainty Quantification|Multidisciplinary Optimization|Multi-fidelity optimization|\boptimization,?["”]'''  # codespell:ignore
+
+[tool.mypy]
+# Run as a pre-commit hook on the whole package (also in the `lint` nox session).
+# The target version is the oldest supported Python, as for Ruff. All dependencies have
+# type hints: scipy through scipy-stubs (in the `lint` group), the others themselves.
+files = ["src/sbo"]
+python_version = "3.11"
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"

@@ -45,18 +45,35 @@ See [Testing](testing.md) for what each level covers.
 Lint workflow. They are `local` hooks that run the tools installed from the `lint` dependency group in `pyproject.toml`
 (`uv run --no-sync <tool>`), so pre-commit doesn't install its own copies and the tool versions are set in one place
 only: `uv.lock`. Upgrade them like any other dependency (see [Dependencies](#dependencies)); don't run
-`pre-commit autoupdate`. The hooks need the `lint` group installed: `uv sync --locked` installs it, and
-`uv sync --locked --only-group lint` installs only the hook tools.
+`pre-commit autoupdate`. The hooks need the `lint` group installed, and mypy also needs the dependencies of the package
+for their types: `uv sync --locked` installs both, and
+`uv sync --locked --no-install-project --no-default-groups --group lint` installs only these (as the `lint` nox session
+does).
 
 | Hook                                                   | Files          | What it does                                                                                                             |
 | ------------------------------------------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `ruff-check`                                           | Python         | Lint (pycodestyle, pyflakes, bugbear, builtins, comprehensions, annotations, NumPy docstrings, bandit) and sort imports. |
 | `ruff-format`                                          | Python         | Format (line length 88).                                                                                                 |
+| `mypy`                                                 | Python         | Type check the package (`src/sbo`); see below.                                                                           |
 | `mdformat` (with `mdformat-mkdocs`, `mdformat-tables`) | Markdown       | Format: wrap at 120 characters, number lists, align tables; keeps the MkDocs syntax.                                     |
 | `codespell`                                            | All text files | Report common typos and American spellings (British spelling); see below.                                                |
 | `end-of-file-fixer`, `trailing-whitespace`             | All text files | One final newline, no trailing spaces.                                                                                   |
 
 The formatting hooks change the files and fail the commit; add the changed files and commit again.
+
+### Type Checking
+
+mypy checks the type hints of the package (`src/sbo`), configured under `[tool.mypy]` in `pyproject.toml`. The hook
+always checks the whole package (`uv run mypy`), not only the changed files. All dependencies have type hints: numpy,
+matplotlib, smt and mpi4py ship them, and scipy gets them from `scipy-stubs` (in the `lint` group), whose version
+follows scipy's. The whole package passes, so new code has to pass too. When fixing an error, prefer correcting the code
+or the annotation, or narrowing the type (e.g. `if x is None: raise ...`), over `typing.cast`. Use
+`# type: ignore[<code>]` only as a last resort, with a comment saying why; `warn_unused_ignores` reports it once it is
+no longer needed. On a signature that spans several lines, mypy reports the error on the `def` line, so the comment goes
+there.
+
+The package ships an empty `src/sbo/py.typed` ([PEP 561](https://peps.python.org/pep-0561/)), so mypy and other type
+checkers use its type hints in the projects that install it.
 
 The project uses British spelling (optimisation, modelling, colour). `codespell` checks it with its default dictionaries
 plus `.codespell-en-GB.txt`, which maps American spellings to British ones (configured under `[tool.codespell]` in
@@ -76,7 +93,7 @@ from the matrix and runs one session, e.g. `nox -s "tests-${{ matrix.python-vers
 
 | Workflow             | Runs on                                                    | Jobs                                                                  | Required check          |
 | -------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------- | ----------------------- |
-| `lint.yml`           | All pushes and pull requests to `main` and `dev`           | Pre-commit hooks on all files                                         | `pre-commit`            |
+| `lint.yml`           | All pushes and pull requests to `main` and `dev`           | Pre-commit hooks on all files (incl. mypy)                            | `pre-commit`            |
 | `ci.yml`             | All pushes and pull requests to `main` and `dev`           | deptry, unit tests (Linux and Windows)                                | `CI passed`             |
 | `extended.yml`       | Pull requests and pushes to `main`; manually on any branch | Verification and E2E tests; coverage (manual)                         | `Extended tests passed` |
 | `docs.yml`           | Pushes to `main` and all pull requests                     | Builds the docs; deploys them on `main`                               | `build`                 |
