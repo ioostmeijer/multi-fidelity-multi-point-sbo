@@ -2,9 +2,11 @@ import copy
 import importlib
 import math
 import os
+from typing import Literal, overload
 
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.artist import Artist
 from matplotlib.lines import Line2D, lineStyles
 from smt.applications import NestedLHS
 from smt.sampling_methods import LHS
@@ -108,7 +110,7 @@ class SBO:
                 initial_samples = MPI.COMM_WORLD.bcast(initial_samples, root=0)
 
         # If MPI is used, receive initial samples from root
-        elif MPI is not None and MPI.COMM_WORLD.Get_rank() != 0:
+        else:
             initial_samples = MPI.COMM_WORLD.bcast(initial_samples, root=0)
 
         if MPI is not None:
@@ -189,14 +191,14 @@ class SBO:
                     seed=self.config.get("random_seed"),
                 )
                 x_init = lhs(self.config.get("number_initial_samples"))
-                fid = self.config.rng.integers(
-                    0, self.config.num_fidelities, size=x_init.shape[0]
+                fids = self.config.rng.integers(
+                    0, self.config.num_fidelities, size=(x_init.shape[0],)
                 )
                 initial_samples = [
                     {
                         "coord": x_init[i],
-                        "value": self.config.functions[fid[i]](x_init[i])[0],
-                        "fid": int(fid[i]),
+                        "value": self.config.functions[fids[i]](x_init[i])[0],
+                        "fid": int(fids[i]),
                     }
                     for i in range(x_init.shape[0])
                 ]
@@ -252,8 +254,32 @@ class SBO:
                             fid_counts[lower_fid] += 1
         return initial_samples
 
+    @overload
     def _initialise_component(
-        self, algorithm: str, algorithm_type: str, *args, **kwargs
+        self,
+        *args,
+        algorithm: str,
+        algorithm_type: Literal["infill"],
+        **kwargs,
+    ) -> InfillBase: ...
+    @overload
+    def _initialise_component(
+        self,
+        *args,
+        algorithm: str,
+        algorithm_type: Literal["surrogate"],
+        **kwargs,
+    ) -> SurrogateBase: ...
+    @overload
+    def _initialise_component(
+        self,
+        *args,
+        algorithm: str,
+        algorithm_type: Literal["optimisation"],
+        **kwargs,
+    ) -> OptimisationBase: ...
+    def _initialise_component(
+        self, *args, algorithm: str, algorithm_type: str, **kwargs
     ) -> InfillBase | SurrogateBase | OptimisationBase:
         """Initialise the component based on the algorithm name.
 
@@ -304,7 +330,7 @@ class SBO:
             self._optimum is None
             or self.config.used_algorithms != self._backup_used_alg
         ):
-            _ = self.run()
+            return self.run()
         return self._optimum
 
     @property
@@ -401,7 +427,7 @@ class SBO:
             if key == "optimisation":
                 self._optimisation = self._initialise_component(
                     algorithm=new_alg,
-                    algorithm_type=key,
+                    algorithm_type="optimisation",
                     config=self.config,
                 )
             elif key == "surrogate":
@@ -409,7 +435,7 @@ class SBO:
                 old_samples = copy.deepcopy(self._surrogate.samples)
                 self._surrogate = self._initialise_component(
                     algorithm=new_alg,
-                    algorithm_type=key,
+                    algorithm_type="surrogate",
                     config=self.config,
                 )
                 if any(old_samples.values()):
@@ -417,7 +443,7 @@ class SBO:
             elif key == "infill":
                 self._infill = self._initialise_component(
                     algorithm=new_alg,
-                    algorithm_type=key,
+                    algorithm_type="infill",
                     config=self.config,
                 )
 
@@ -668,7 +694,7 @@ class SBO:
         prev_iteration_added = (
             optimisation_data["init"]["sample_points"]
             if "init" in optimisation_data
-            else []
+            else {}
         )
 
         # Save the current training points for the surrogate to restore after plotting
@@ -681,12 +707,12 @@ class SBO:
 
         # Set up tracker for lines
         true_function_lines = {}
-        next_sample_locations_plotted = {}
+        next_sample_locations_plotted: dict[int, Artist] = {}
         sample_points_plotted = {}
         new_points_plotted = {}
 
         # Setup linestyle tracker for each fidelity
-        linestyle_fid = [
+        linestyle_fid: list[str | tuple[int, tuple[int, int]]] = [
             style
             for style in lineStyles.keys()
             if style not in ["-", "", " ", "None", "none"]
@@ -710,7 +736,7 @@ class SBO:
                 else (
                     optimisation_data["init"]["sample_points"]
                     if "init" in optimisation_data
-                    else []
+                    else {}
                 )
             )
             current_samples = optimisation_data[iteration_key]["sample_points"]
@@ -840,7 +866,7 @@ class SBO:
                 # Plot the next sample locations
                 if (k != n_iter - 1) or (k == n_iter - 1 and not last_iteration_end):
                     for fid, points in next_location_k.items():
-                        next_sample_locations_plot = ax.vlines(
+                        next_sample_locations_plot: Artist = ax.vlines(
                             np.ravel([p["coord"] for p in points]),
                             ymin=ax.get_ylim()[0],
                             ymax=ax.get_ylim()[1],
@@ -981,7 +1007,8 @@ class SBO:
                 prev_iteration_added = next_location_k
 
         # Add legend to the overall figure
-        handles, labels = [], []
+        handles: list[Artist] = []
+        labels: list[str] = []
         if self.config.dimension == 1:
             if true_functions_plot is not None:
                 for fid in true_function_lines:
@@ -1024,15 +1051,12 @@ class SBO:
         header_h_in = SUPTITLE_H_IN + 2 * GAP_IN + legend_h_in
         top_val = max(0.5, 1.0 - header_h_in / total_height_in)
 
-        fig.suptitle(title, y=0.995)
-        plt.tight_layout(rect=[0, 0, 1, top_val])
+        suptitle = fig.suptitle(title, y=0.995)
+        plt.tight_layout(rect=(0, 0, 1, top_val))
 
         fig.canvas.draw()
-        renderer = fig.canvas.get_renderer()
         inv = fig.transFigure.inverted()
-        sup_bottom_frac = inv.transform(
-            (0, fig._suptitle.get_window_extent(renderer).y0)
-        )[1]
+        sup_bottom_frac = inv.transform((0, suptitle.get_window_extent().y0))[1]
 
         legend = fig.legend(
             handles,
@@ -1045,10 +1069,9 @@ class SBO:
         )
 
         fig.canvas.draw()
-        renderer = fig.canvas.get_renderer()
-        leg_bottom_frac = inv.transform((0, legend.get_window_extent(renderer).y0))[1]
+        leg_bottom_frac = inv.transform((0, legend.get_window_extent().y0))[1]
 
-        plt.tight_layout(rect=[0, 0, 1, leg_bottom_frac - 0.01])  # was 0.01
+        plt.tight_layout(rect=(0, 0, 1, leg_bottom_frac - 0.01))  # was 0.01
 
         # Save the plot
         if filename is not None:

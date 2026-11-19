@@ -201,7 +201,7 @@ class SurrogateBase(Base):
         self.config.logger.error(msg)
         raise NotImplementedError(msg)
 
-    def set_training_data(self, points: list[dict]) -> None:
+    def set_training_data(self, points: list[dict] | dict) -> None:
         """Set the training data for the surrogate model.
 
         This replaces the current samples. If you want to add samples, use
@@ -211,7 +211,10 @@ class SurrogateBase(Base):
         ----------
         points
             A list of dictionaries containing the training data points.
-            ({'coord': np.ndarray, 'fidelity': int, 'value': float})
+            ({'coord': np.ndarray, 'fid': int, 'value': float})
+            or a dictionary containing the training data points, with fidelity levels as
+            keys.
+            ({fid: list of dict, ...})
         """
         self.samples = {fid: [] for fid in range(self.config.num_fidelities)}
 
