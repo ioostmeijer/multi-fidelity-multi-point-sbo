@@ -8,6 +8,7 @@ This page explains how the parts of the package work together. The classes thems
 | Path                             | Contents                                                                                    |
 | -------------------------------- | ------------------------------------------------------------------------------------------- |
 | `sbo/SBO.py`                     | `SBO`: creates the components, provides the initial samples, runs and plots.                |
+| `sbo/types.py`                   | The shared types for points and samples (`Point`, `EvaluatedPoint`, `Samples`, ...).        |
 | `sbo/utils/Config.py`            | `Config`: the problem definition and settings (singleton).                                  |
 | `sbo/utils/validate_settings.py` | Checks user settings against the default settings.                                          |
 | `sbo/utils/Logger.py`            | `setup_logger` and `get_logger`.                                                            |
@@ -115,15 +116,22 @@ stored per iteration in [Results, Plots and Logs](../user/results.md#optimisatio
 
 ## Data Structures
 
-These structures are used throughout the code:
+These structures are used throughout the code. The types are defined in [`sbo.types`](../api/sbo/types.md) as
+`TypedDict`s and aliases: at runtime a point is a plain `dict` (`point["coord"]`), while mypy checks the key names and
+value types. Use these types in new code instead of `dict`.
 
-| Name              | Shape                                                                                                                     | Used for                                                                                                            |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Point             | `{"coord": np.ndarray, "fid": int}`, plus `"value": float` once evaluated, and `"start_time"`, `"end_time"`, `"mpi_rank"` | A location to evaluate, or an evaluated sample. `fid` 0 is the HF function.                                         |
-| Task              | `list[Point]`                                                                                                             | Points that are evaluated together by one worker, e.g. the same location at several fidelities for nested sampling. |
-| Tasks             | `list[Task]`                                                                                                              | What an infill strategy returns (with the infill value): `tuple[list[list[dict]], float]`.                          |
-| Samples           | `{fid: list[Point]}`                                                                                                      | `surrogate.samples`: the training data per fidelity.                                                                |
-| Optimisation data | `{iteration: {...}, "init": ..., "total": ..., ...}`                                                                      | Everything stored during a run; see [Results](../user/results.md#optimisation-data).                                |
+| Type              | Shape                                                                 | Used for                                                                                                            |
+| ----------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `Point`           | `{"coord": np.ndarray, "fid": int}`, optional `"start_time"`          | A location to evaluate: what infill strategies propose, and the pending points. `fid` 0 is the HF function.         |
+| `EvaluatedPoint`  | `Point` plus `"value": float`, optional `"mpi_rank"` and `"end_time"` | A sample, the surrogate optimum (`get_optimum`, value predicted) and the result of the optimisation.                |
+| `Task`            | `list[Point]`                                                         | Points that are evaluated together by one worker, e.g. the same location at several fidelities for nested sampling. |
+| `InfillResult`    | `tuple[list[Task], float]`                                            | What an infill strategy returns: the new tasks and the infill value.                                                |
+| `Samples`         | `dict[int, list[EvaluatedPoint]]`                                     | `surrogate.samples`: the training data per fidelity.                                                                |
+| `FunctionCalls`   | `dict[int, int]`                                                      | The number of function calls per fidelity.                                                                          |
+| Optimisation data | `{iteration: {...}, "init": ..., "total": ..., ...}` (a plain `dict`) | Everything stored during a run; see [Results](../user/results.md#optimisation-data).                                |
+
+`evaluate_point` returns a new `EvaluatedPoint`; its `inplace` argument is deprecated. With MPI, the result on the
+worker ranks is an empty dict, typed as `EvaluatedPoint` for the result on rank 0.
 
 ## Config
 

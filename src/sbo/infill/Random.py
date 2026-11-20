@@ -1,6 +1,7 @@
 import numpy as np
 
 from ..surrogate import SurrogateBase
+from ..types import InfillResult
 from .Base import InfillBase
 
 
@@ -26,16 +27,15 @@ class Random(InfillBase[SurrogateBase]):
                 "ignored."
             )
 
-    def get_new_points(self, *args, **kwargs) -> tuple[list[list[dict]], float]:
+    def get_new_points(self, *args, **kwargs) -> InfillResult:
         """Generate new random points within the defined bounds.
 
         Returns
         -------
-        tuple[list[list[dict]], float]
+        InfillResult
             The new points and the infill value. The new points are a list of
-            tasks; each task is a list of points to evaluate together
-            ({'coord': np.ndarray, 'fid': int}, fid 0 is HF). The infill value is
-            always inf for Random.
+            tasks (Task); each task is a list of points (Point) to evaluate
+            together. The infill value is always inf for Random.
         """
         number_new_points = self.config["number_new_points"]
 
@@ -57,7 +57,7 @@ class Random(InfillBase[SurrogateBase]):
         # Create list of tasks (new points with their fidelity levels)
         tasks = [
             self._return_nested_samples(
-                [{"coord": new_points[i], "fid": fidelities[i]}]
+                [{"coord": new_points[i], "fid": int(fidelities[i])}]
             )
             for i in range(len(new_points))
         ]

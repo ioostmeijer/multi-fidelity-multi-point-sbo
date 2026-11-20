@@ -72,6 +72,13 @@ or the annotation, or narrowing the type (e.g. `if x is None: raise ...`), over 
 no longer needed. On a signature that spans several lines, mypy reports the error on the `def` line, so the comment goes
 there.
 
+Points and samples are plain dicts typed with the `TypedDict`s and aliases in `src/sbo/types.py` (`Point`,
+`EvaluatedPoint`, `Task`, `Samples`, `FunctionCalls`, `InfillResult`); use them instead of `dict` or `list[dict]` in new
+code, see [Architecture](architecture.md#data-structures). When building a point, annotate the variable
+(`task: Task = [{"coord": x, "fid": 0}]`), so mypy checks the keys of the literal. A list of samples
+(`list[EvaluatedPoint]`) is not a `list[Point]` for mypy (lists are invariant): take `Sequence[Point]` in a parameter
+that only reads the points. In 2.0.0 these types become dataclasses (#61).
+
 The package ships an empty `src/sbo/py.typed` ([PEP 561](https://peps.python.org/pep-0561/)), so mypy and other type
 checkers use its type hints in the projects that install it.
 

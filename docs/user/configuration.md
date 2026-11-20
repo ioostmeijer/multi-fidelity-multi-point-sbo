@@ -107,8 +107,18 @@ optimum = SBO(config, initial_samples=initial_samples).run()
 ```
 
 Each sample is a dict with its coordinates (`coord`), objective value (`value`) and fidelity level (`fid`, 0 is the
-highest fidelity). If a fidelity level has fewer than two samples, random extra samples are added (seeded with
-`random_seed`). The list you pass is not changed.
+highest fidelity). `SBO` checks them first and raises a `ValueError` that names the sample if one misses a key or has a
+fidelity level outside 0 to `num_fidelities - 1`. If a fidelity level has fewer than two samples, random extra samples
+are added (seeded with `random_seed`). The list you pass is not changed.
+
+For type checkers, a sample is an `EvaluatedPoint` from [`sbo.types`](../api/sbo/types.md); at runtime it stays a plain
+dict:
+
+```python
+from sbo.types import EvaluatedPoint
+
+initial_samples: list[EvaluatedPoint] = [{"coord": np.array([1.0]), "value": 1.0, "fid": 0}]
+```
 
 ## Constraints
 

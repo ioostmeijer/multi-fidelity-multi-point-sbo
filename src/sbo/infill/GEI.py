@@ -4,6 +4,7 @@ import numpy as np
 from scipy.stats import norm
 
 from ..surrogate import SurrogateBaseWithVariance
+from ..types import InfillResult, Task
 from .Base import InfillBase
 
 
@@ -49,9 +50,7 @@ class GEI(InfillBase[SurrogateBaseWithVariance]):
         #         "ignored."
         #     )
 
-    def get_new_points(
-        self, surrogate: SurrogateBaseWithVariance
-    ) -> tuple[list[list[dict]], float]:
+    def get_new_points(self, surrogate: SurrogateBaseWithVariance) -> InfillResult:
         """Generate new points based on the Generalised Expected Improvement strategy.
 
         Parameters
@@ -61,11 +60,11 @@ class GEI(InfillBase[SurrogateBaseWithVariance]):
 
         Returns
         -------
-        tuple[list[list[dict]], float]
+        InfillResult
             The new points and the infill value. The new points are a list of
-            tasks; each task is a list of points to evaluate together
-            ({'coord': np.ndarray, 'fid': int}, fid 0 is HF). The infill value is
-            the value of the infill criterion at the selected point.
+            tasks (Task); each task is a list of points (Point) to evaluate
+            together. The infill value is the value of the infill criterion at
+            the selected point.
 
         Raises
         ------
@@ -110,7 +109,7 @@ class GEI(InfillBase[SurrogateBaseWithVariance]):
             _optim_function
         )
 
-        task = [{"coord": sample_coord, "fid": 0}]
+        task: Task = [{"coord": sample_coord, "fid": 0}]
         return [self._return_nested_samples(task)], -infill_value
 
     def calc_infill_value(

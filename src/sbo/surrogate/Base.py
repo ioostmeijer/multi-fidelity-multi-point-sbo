@@ -7,6 +7,7 @@ from typing import Any, Literal, overload
 import numpy as np
 from scipy.optimize import differential_evolution
 
+from ..types import EvaluatedPoint, Samples
 from ..utils import Base
 
 
@@ -16,7 +17,7 @@ class SurrogateBase(Base):
     Attributes
     ----------
     samples
-        A dictionary storing the training data.
+        The training data per fidelity level ({fid: [EvaluatedPoint, ...], ...}).
     """
 
     # Whether predict(..., fidelity=f) gives the prediction at fidelity f. Surrogates
@@ -24,21 +25,20 @@ class SurrogateBase(Base):
     supports_fidelity_prediction: bool = False
 
     def __init__(
-        self, *args, initial_samples: list[dict] | None = None, **kwargs
+        self, *args, initial_samples: list[EvaluatedPoint] | None = None, **kwargs
     ) -> None:
         """Initialise the SurrogateBase class.
 
         Parameters
         ----------
         initial_samples
-            A list of dictionaries containing initial training data points.
-            ({'coord': np.ndarray, 'fidelity': int, 'value': float})
+            The initial training data points.
         """
         super().__init__(*args, **kwargs)
 
         self._trained: bool = False
-        self._optimum: dict[int, dict | None] = self._no_optimum()
-        self.samples: dict = {fid: [] for fid in range(self.config.num_fidelities)}
+        self._optimum: dict[int, EvaluatedPoint | None] = self._no_optimum()
+        self.samples: Samples = {fid: [] for fid in range(self.config.num_fidelities)}
         if initial_samples is not None:
             self.set_training_data(initial_samples)
 
@@ -126,7 +126,7 @@ class SurrogateBase(Base):
         """
         return self.predict(x, *args, **kwargs)
 
-    def get_optimum(self, fidelity: int = 0) -> dict:
+    def get_optimum(self, fidelity: int = 0) -> EvaluatedPoint:
         """Retrieve the current optimum from the surrogate model.
 
         Parameters
@@ -136,8 +136,9 @@ class SurrogateBase(Base):
 
         Returns
         -------
-        dict
-            A dictionary containing the optimum information.
+        EvaluatedPoint
+            The optimum of the surrogate at the given fidelity; its value is the
+            predicted value.
 
         Raises
         ------
@@ -182,7 +183,11 @@ class SurrogateBase(Base):
             atol=self.config.get("surrogate_opt_atol", 0),
             seed=self.config.get("random_seed"),
         )
-        optimum = {"coord": result.x, "value": result.fun}
+        optimum: EvaluatedPoint = {
+            "coord": result.x,
+            "fid": fidelity,
+            "value": float(result.fun),
+        }
         self._optimum[fidelity] = optimum
         return optimum
 
@@ -201,7 +206,7 @@ class SurrogateBase(Base):
         self.config.logger.error(msg)
         raise NotImplementedError(msg)
 
-    def set_training_data(self, points: list[dict] | dict) -> None:
+    def set_training_data(self, points: list[EvaluatedPoint] | Samples) -> None:
         """Set the training data for the surrogate model.
 
         This replaces the current samples. If you want to add samples, use
@@ -210,18 +215,16 @@ class SurrogateBase(Base):
         Parameters
         ----------
         points
-            A list of dictionaries containing the training data points.
-            ({'coord': np.ndarray, 'fid': int, 'value': float})
-            or a dictionary containing the training data points, with fidelity levels as
-            keys.
-            ({fid: list of dict, ...})
+            The training data points: a list of points, or the samples per fidelity
+            level ({fid: [EvaluatedPoint, ...], ...}). A value given as a list or
+            array is converted to a float.
         """
         self.samples = {fid: [] for fid in range(self.config.num_fidelities)}
 
         self.add_training_data(points)
         return
 
-    def add_training_data(self, points: list[dict] | dict) -> None:
+    def add_training_data(self, points: list[EvaluatedPoint] | Samples) -> None:
         """Add training data to the surrogate model.
 
         This adds the provided points to the current samples. If you want to
@@ -230,14 +233,12 @@ class SurrogateBase(Base):
         Parameters
         ----------
         points
-            A list of dictionaries containing the training data points.
-            ({'coord': np.ndarray, 'fid': int, 'value': float})
-            or a dictionary containing the training data points, with fidelity levels as
-            keys.
-            ({fid: list of dict, ...})
+            The training data points: a list of points, or the samples per fidelity
+            level ({fid: [EvaluatedPoint, ...], ...}). A value given as a list or
+            array is converted to a float.
         """
         if isinstance(points, dict):
-            points_list = []
+            points_list: list[EvaluatedPoint] = []
             for fid_points in points.values():
                 points_list.extend(fid_points)
         else:
@@ -245,8 +246,8 @@ class SurrogateBase(Base):
 
         for point in points_list:
             # Copy the point so the caller's data is not changed
-            point = dict(point)
-            fidelity = point.get("fid")
+            point = point.copy()
+            fidelity = point["fid"]
 
             if isinstance(point["value"], list) or isinstance(
                 point["value"], np.ndarray
@@ -277,12 +278,12 @@ class SurrogateBase(Base):
         self._trained = False
         self._optimum = self._no_optimum()
 
-    def _no_optimum(self) -> dict[int, dict | None]:
+    def _no_optimum(self) -> dict[int, EvaluatedPoint | None]:
         """Return the optimum cache with no optimum calculated for any fidelity.
 
         Returns
         -------
-        dict[int, dict | None]
+        dict[int, EvaluatedPoint | None]
             None for each fidelity level.
         """
         return dict.fromkeys(range(self.config.num_fidelities), None)
