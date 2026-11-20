@@ -7,12 +7,13 @@ from `InfillBase` (`src/sbo/infill/Base.py`), and follow the [checklist](index.m
 
 | Method                                                   | Returns                                  | Purpose                                                                                                      |
 | -------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `get_new_points(self, surrogate, *args, **kwargs)`       | `tuple[list[list[dict]], float]`         | The new tasks and the infill value; called by the optimisation algorithm via `infill(surrogate)`.            |
+| `get_new_points(self, surrogate, *args, **kwargs)`       | `InfillResult`                           | The new tasks and the infill value; called by the optimisation algorithm via `infill(surrogate)`.            |
 | `calc_infill_value(self, x, surrogate, *args, **kwargs)` | `float` (or an array for several points) | The infill value at `x`; used for plotting. Raise `NotImplementedError` if there is none (as `Random` does). |
 
-`get_new_points` returns a list of **tasks**, each a list of points `{"coord": np.ndarray, "fid": int}` that one worker
-evaluates together, and the **infill value** of the selection. The optimisation algorithm uses the infill value for the
-`min_infill_value` stopping criterion, so return `float("inf")` if your strategy has no meaningful value.
+`get_new_points` returns a list of **tasks**, each a list of points (`Point`: `{"coord": np.ndarray, "fid": int}`) that
+one worker evaluates together, and the **infill value** of the selection. The types are in
+[`sbo.types`](../../api/sbo/types.md). The optimisation algorithm uses the infill value for the `min_infill_value`
+stopping criterion, so return `float("inf")` if your strategy has no meaningful value.
 
 ## Helpers from InfillBase
 
@@ -42,6 +43,7 @@ A minimal strategy that samples where the surrogate prediction is lowest:
 import numpy as np
 
 from ..surrogate import SurrogateBase
+from ..types import InfillResult, Task
 from .Base import InfillBase
 
 
@@ -50,12 +52,12 @@ class LowestPrediction(InfillBase):
 
     def get_new_points(
         self, surrogate: SurrogateBase, *args, **kwargs
-    ) -> tuple[list[list[dict]], float]:
+    ) -> InfillResult:
         """Return the minimum of the surrogate as the new point."""
         coord, _ = self._select_sample_point_optimisation(
             lambda x: self.calc_infill_value(x, surrogate)
         )
-        task = [{"coord": coord, "fid": 0}]
+        task: Task = [{"coord": coord, "fid": 0}]
         return [self._return_nested_samples(task)], float("inf")
 
     def calc_infill_value(

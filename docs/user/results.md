@@ -2,7 +2,8 @@
 
 ## The Optimum
 
-`sbo.run()` (or `sbo()`, or the `sbo.optimum` property) returns the best point found:
+`sbo.run()` (or `sbo()`, or the `sbo.optimum` property) returns the best point found, a dict typed as `EvaluatedPoint`
+(see [`sbo.types`](../api/sbo/types.md)):
 
 | Key                      | Meaning                                                                                          |
 | ------------------------ | ------------------------------------------------------------------------------------------------ |
@@ -32,15 +33,15 @@ entries:
 
 Each iteration entry contains:
 
-| Key                                   | Contents                                                                       |
-| ------------------------------------- | ------------------------------------------------------------------------------ |
-| `best_value`, `best_coord`            | Best high-fidelity sample so far.                                              |
-| `surrogate_optimum`                   | Optimum of the surrogate (`coord`, `value`), used by the convergence criteria. |
-| `infill_value`                        | Infill value of the selected point(s), e.g. the expected improvement.          |
-| `function_calls`, `function_calls_HF` | Number of calls so far, per fidelity (`{fid: count}`) and for the HF function. |
-| `sample_points`                       | All samples so far, per fidelity (`{fid: [points]}`).                          |
-| `time_elapsed`                        | Duration of the iteration in seconds.                                          |
-| `time_since_start`                    | `EgoAsync` only: seconds since the start of the run.                           |
+| Key                                   | Contents                                                                              |
+| ------------------------------------- | ------------------------------------------------------------------------------------- |
+| `best_value`, `best_coord`            | Best high-fidelity sample so far.                                                     |
+| `surrogate_optimum`                   | Optimum of the surrogate (`coord`, `value`, `fid`), used by the convergence criteria. |
+| `infill_value`                        | Infill value of the selected point(s), e.g. the expected improvement.                 |
+| `function_calls`, `function_calls_HF` | Number of calls so far, per fidelity (`{fid: count}`) and for the HF function.        |
+| `sample_points`                       | All samples so far, per fidelity (`{fid: [points]}`).                                 |
+| `time_elapsed`                        | Duration of the iteration in seconds.                                                 |
+| `time_since_start`                    | `EgoAsync` only: seconds since the start of the run.                                  |
 
 For example, the convergence history:
 

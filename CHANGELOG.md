@@ -10,11 +10,23 @@ All notable changes to this project are listed in this file. The format is based
 
 - The package ships a `py.typed` file ([PEP 561](https://peps.python.org/pep-0561/)), so type checkers such as mypy use
     its type hints in projects that use it.
+- The module `sbo.types` with shared types for points and samples: `Point`, `EvaluatedPoint` (`TypedDict`s), `Task`,
+    `Samples`, `FunctionCalls` and `InfillResult`. The package uses them in its signatures, e.g. `initial_samples`,
+    `SBO.optimum`, `surrogate.samples` and the return value of the infill strategies. At runtime the points stay plain
+    dicts.
+- `SBO` checks the given `initial_samples`, and raises a `ValueError` with the sample's index if a sample misses
+    `coord`, `fid` or `value`, or has an invalid fidelity level.
 
 ### Changed
 
+- `get_optimum` of the surrogates also returns the fidelity level (`fid`) of the optimum.
 - The README and the documentation mark `CoKRG` and `FilteredGEI` as planned for 1.4.0 and `CEI` for 1.5.0, instead of
     "not implemented" or "not functional".
+
+### Deprecated
+
+- The `inplace` argument of `OptimisationBase.evaluate_point`; use the returned point instead. It will be removed in
+    2.0.0.
 
 ### Fixed
 
