@@ -1,7 +1,8 @@
 name: Move issues to In dev
 
 # When a pull request into dev is merged, set the linked issues ("Part of #N") to "In dev" on the
-# SBO roadmap project. The issues stay open; the release pull request into main closes them.
+# SBO roadmap project, and unblock the issues they were blocking. The issues stay open; the release
+# pull request into main closes them.
 
 on:
   pull_request:
@@ -10,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   in-dev:
@@ -17,22 +19,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Set linked issues to In dev
+      - name: Find the linked issues
+        id: linked
         env:
-          # GITHUB_TOKEN can't write to a user project: fine-grained PAT with Projects read/write.
-          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
-          # Passed through env (not ${{ }} in the script), so the body can't inject shell commands.
           PR_BODY: ${{ github.event.pull_request.body }}
+        shell: bash
+        run: |
+          issues=$(printf '%s' "$PR_BODY" \
+            | grep -oiE '(part of|closes|fixes|resolves) #[0-9]+' | grep -oE '[0-9]+' | sort -u \
+            | tr '\n' ' ')
+          if [ -z "$issues" ]; then echo "No linked issues in the pull request body."; fi
+          echo "issues=$issues" >> "$GITHUB_OUTPUT"
+
+      - name: Set linked issues to In dev
+        if: steps.linked.outputs.issues != ''
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          ISSUES: ${{ steps.linked.outputs.issues }}
           REPO: ${{ github.repository }}
           PROJECT_ID: PVT_kwHOBG3Nt84Bq_hZ
           STATUS_FIELD_ID: PVTSSF_lAHOBG3Nt84Bq_hZzhpUKcg
           IN_DEV_OPTION_ID: ebac54f3
         shell: bash
         run: |
-          issues=$(printf '%s' "$PR_BODY" \
-            | grep -oiE '(part of|closes|fixes|resolves) #[0-9]+' | grep -oE '[0-9]+' | sort -u)
-          if [ -z "$issues" ]; then echo "No linked issues in the pull request body."; exit 0; fi
-          for n in $issues; do
+          for n in $ISSUES; do
             item=$(gh api graphql -f query='
               query($owner: String!, $name: String!, $n: Int!) {
                 repository(owner: $owner, name: $name) {
@@ -52,4 +62,32 @@ jobs:
               }' -f project="$PROJECT_ID" -f item="$item" \
               -f field="$STATUS_FIELD_ID" -f option="$IN_DEV_OPTION_ID" > /dev/null
             echo "#$n -> In dev"
+          done
+
+      - name: Unblock the issues the linked issues were blocking
+        if: ${{ !cancelled() && steps.linked.outputs.issues != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUES: ${{ steps.linked.outputs.issues }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          for n in $ISSUES; do
+            id=$(gh api "repos/$REPO/issues/$n" --jq .id)
+            blocked=$(gh api "repos/$REPO/issues/$n/dependencies/blocking" --paginate --jq '.[].number')
+            for b in $blocked; do
+              body=$(gh api "repos/$REPO/issues/$b" --jq '.body // ""')
+              if grep -qF "#$n (done on dev" <<< "$body"; then
+                new=$body
+              elif grep -qE "Depends on #$n([^0-9]|$)" <<< "$body"; then
+                new=$(sed -E "s/(Depends on #$n)([^0-9]|$)/\1 (done on dev)\2/" <<< "$body")
+              else
+                new="$body"$'\n\n'"Depends on #$n (done on dev)."
+              fi
+              if [ "$new" != "$body" ]; then
+                gh api -X PATCH "repos/$REPO/issues/$b" -f body="$new" > /dev/null
+              fi
+              gh api -X DELETE "repos/$REPO/issues/$b/dependencies/blocked_by/$id" --silent
+              echo "#$b no longer blocked by #$n"
+            done
           done
