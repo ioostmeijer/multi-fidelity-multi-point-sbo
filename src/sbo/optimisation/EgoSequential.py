@@ -1,8 +1,10 @@
 import copy
 import time
+from typing import cast
 
 from ..infill import InfillBase
 from ..surrogate import SurrogateBase
+from ..types import EvaluatedPoint, FunctionCalls
 from ..utils._mpi import MPI
 from .Base import OptimisationBase
 
@@ -23,7 +25,7 @@ class EgoSequential(OptimisationBase):
 
     def solve(
         self, surrogate: SurrogateBase, infill: InfillBase, *args, **kwargs
-    ) -> dict:
+    ) -> EvaluatedPoint:
         """Run the EGO Sequential Optimisation algorithm.
 
         This method is based on the method implemented in SMT. It uses a surrogate model
@@ -44,14 +46,16 @@ class EgoSequential(OptimisationBase):
 
         Returns
         -------
-        dict
-            The best point found, as a dictionary with keys "value", "coord", and "fid".
+        EvaluatedPoint
+            The best point found: the best HF sample, or the evaluated surrogate optimum
+            if that is better. With MPI, the other ranks return an empty dict.
         """
         if MPI is not None and MPI.COMM_WORLD.Get_rank() != 0:
             self.config.logger.info(
                 "EGO Sequential Optimisation is only run on the root process."
             )
-            return {}
+            # Typed as EvaluatedPoint for the user on rank 0, see #59
+            return cast(EvaluatedPoint, {})
 
         # Save initial state to optimisation data
         self._optimisation_data["init"] = {
@@ -69,8 +73,10 @@ class EgoSequential(OptimisationBase):
         iteration = 0
         best_value = float("inf")
         start_time = time.time()
-        function_calls = dict.fromkeys(range(self.config.num_fidelities), 0)
-        prev_surr_opt = {"value": float("inf"), "coord": None, "fid": None}
+        function_calls: FunctionCalls = dict.fromkeys(
+            range(self.config.num_fidelities), 0
+        )
+        prev_surr_opt: EvaluatedPoint | None = None
 
         # Start optimisation loop
         self.config.logger.info("Starting EGO Sequential Optimisation")
@@ -88,20 +94,23 @@ class EgoSequential(OptimisationBase):
             new_points = self._remove_duplicates(new_points, surrogate)
 
             # Evaluate the new points sequentially
+            evaluated_points: list[EvaluatedPoint] = []
             for task in new_points:
                 for point in task:
-                    self.evaluate_point(point, inplace=True)
+                    evaluated_points.append(self.evaluate_point(point))
                     function_calls[point["fid"]] += 1
 
-            # Flatten points list and add to the surrogate model
-            evaluated_points = [point for task in new_points for point in task]
+            # Add the evaluated points to the surrogate model
             surrogate.add_training_data(evaluated_points)
             surrogate.train()
 
             # Get the current best value
             best_point = min(surrogate.samples[0], key=lambda p: p["value"])
             best_value = best_point["value"]
-            curr_surr_opt = {**surrogate.get_optimum(fidelity=0), "fid": 0}
+            curr_surr_opt: EvaluatedPoint = {
+                **surrogate.get_optimum(fidelity=0),
+                "fid": 0,
+            }
 
             # Save the data and calculate stopping criteria
             stop = self._run_end_iteration(
@@ -130,8 +139,8 @@ class EgoSequential(OptimisationBase):
 
         # Calculate the best point, add to dict
         best_point = min(surrogate.samples[0], key=lambda p: p["value"])
-        surr_opt = {**surrogate.get_optimum(), "fid": 0}
-        surr_opt = self.evaluate_point(surr_opt, inplace=False, bypass_delay=True)
+        final_surr_opt: EvaluatedPoint = {**surrogate.get_optimum(), "fid": 0}
+        surr_opt = self.evaluate_point(final_surr_opt, bypass_delay=True)
         self._count_final_evaluation(function_calls)
         if surr_opt["value"] < best_point["value"]:
             best_point = surr_opt

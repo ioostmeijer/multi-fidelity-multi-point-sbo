@@ -43,6 +43,7 @@ Run it with `python examples/01_basic_optimisation.py`. `sbo.run()` returns the 
 ```
 
 `coord` is the location, `value` the objective value and `fid` the fidelity level (0 is the high-fidelity function).
+Type checkers know these keys: the result is typed as `EvaluatedPoint` from `sbo.types`.
 [Results, Plots and Logs](results.md) explains the other keys, the data of every iteration, and how to plot it.
 
 The three entries of `used_algorithms` choose the components:

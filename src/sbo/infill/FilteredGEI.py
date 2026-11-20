@@ -1,6 +1,7 @@
 import numpy as np
 
 from ..surrogate import CoKRG, SurrogateBaseWithVariance
+from ..types import InfillResult, Task
 from ..utils import Config, get_logger
 from .GEI import GEI
 
@@ -111,7 +112,7 @@ class FilteredGEI(GEI):
         *args,
         samples_per_iteration: None | dict[int, list[float]] = None,
         **kwargs,
-    ) -> tuple[list[list[dict]], float]:
+    ) -> InfillResult:
         """Generate new points based on the Filtered GEI strategy.
 
         Parameters
@@ -126,11 +127,11 @@ class FilteredGEI(GEI):
 
         Returns
         -------
-        tuple[list[list[dict]], float]
+        InfillResult
             The new points and the infill value. The new points are a list of
-            tasks; each task is a list of points to evaluate together
-            ({'coord': np.ndarray, 'fid': int}, fid 0 is HF). The infill value is
-            the value of the infill criterion at the selected point.
+            tasks (Task); each task is a list of points (Point) to evaluate
+            together. The infill value is the value of the infill criterion at
+            the selected point.
 
         Raises
         ------
@@ -164,7 +165,7 @@ class FilteredGEI(GEI):
         else:
             fid = 1
 
-        task = [{"coord": x_location, "fid": fid}]
+        task: Task = [{"coord": x_location, "fid": fid}]
         return [self._return_nested_samples(task)], gei_value
 
     def _calc_threshold(
@@ -241,7 +242,9 @@ class FilteredGEI(GEI):
         # optimisation) the mean over all HF samples is used instead of the
         # per-iteration average from [1].
         if samples_per_iteration is None:
-            y_hf_mean = np.mean([point["value"] for point in surrogate.samples[0]])
+            y_hf_mean = float(
+                np.mean([point["value"] for point in surrogate.samples[0]])
+            )
         else:
             current_iter = len(samples_per_iteration) + 1
             sum_val = sum(

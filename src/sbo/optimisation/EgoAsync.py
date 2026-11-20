@@ -1,8 +1,10 @@
 import copy
 import time
+from typing import cast
 
 from ..infill import InfillBase
 from ..surrogate import SurrogateBase
+from ..types import EvaluatedPoint, FunctionCalls, Point
 from ..utils import Config
 from ..utils._mpi import MPI
 from .Base import OptimisationBase
@@ -113,7 +115,7 @@ class EgoAsync(OptimisationBase):
 
     def solve(
         self, surrogate: SurrogateBase, infill: InfillBase, *args, **kwargs
-    ) -> dict:
+    ) -> EvaluatedPoint:
         """Run the Asynchronous EGO Optimisation algorithm.
 
         Parameters
@@ -125,9 +127,9 @@ class EgoAsync(OptimisationBase):
 
         Returns
         -------
-        dict
-            The best point found on the coordinator process, Empty dict on worker
-            processes.
+        EvaluatedPoint
+            The best point found on the coordinator process, an empty dict on the
+            worker processes.
 
         Raises
         ------
@@ -148,7 +150,9 @@ class EgoAsync(OptimisationBase):
             optimum = self._solve_worker()
         return optimum
 
-    def _solve_coordinator(self, surrogate: SurrogateBase, infill: InfillBase) -> dict:
+    def _solve_coordinator(
+        self, surrogate: SurrogateBase, infill: InfillBase
+    ) -> EvaluatedPoint:
         """Run the coordinator process of the Asynchronous EGO Optimisation algorithm.
 
         Parameters
@@ -160,9 +164,9 @@ class EgoAsync(OptimisationBase):
 
         Returns
         -------
-        dict
+        EvaluatedPoint
             The best point found: the best HF sample, or the evaluated surrogate optimum
-            if that is better ({'coord': np.ndarray, 'value': float, 'fid': 0, ...}).
+            if that is better.
         """
         # Save initial state to optimisation data
         self._optimisation_data["init"] = {
@@ -177,17 +181,19 @@ class EgoAsync(OptimisationBase):
         }
 
         # Setup catalogue of pending points and free workers
-        pending_points: list[dict] = []
+        pending_points: list[Point] = []
         # 0 is the coordinator and does not evaluate points, due to a limitation of the
         # Python GIL
         free_workers = list(range(1, self.mpi_size))
 
         # Setup solution data
         best_value = float("inf")
-        curr_surr_opt = {"coord": None, "value": float("inf")}
-        prev_surr_opt = {"coord": None, "value": float("inf")}
+        curr_surr_opt: EvaluatedPoint | None = None
+        prev_surr_opt: EvaluatedPoint | None = None
         infill_value = float("inf")
-        function_calls = dict.fromkeys(range(self.config.num_fidelities), 0)
+        function_calls: FunctionCalls = dict.fromkeys(
+            range(self.config.num_fidelities), 0
+        )
 
         # Flag to keep track of updated surrogate
         surrogate_updated = True
@@ -345,9 +351,7 @@ class EgoAsync(OptimisationBase):
         best_point = min(surrogate.samples[0], key=lambda p: p["value"])
         prev_surr_opt = curr_surr_opt
         curr_surr_opt = {**surrogate.get_optimum(), "fid": 0}
-        opt_surr = self.evaluate_point(
-            dict(curr_surr_opt), inplace=False, bypass_delay=True
-        )
+        opt_surr = self.evaluate_point(curr_surr_opt, bypass_delay=True)
         self._count_final_evaluation(function_calls)
         if opt_surr["value"] < best_point["value"]:
             best_point = opt_surr
@@ -380,7 +384,7 @@ class EgoAsync(OptimisationBase):
         # return the optimum
         return best_point
 
-    def _solve_worker(self) -> dict:
+    def _solve_worker(self) -> EvaluatedPoint:
         """Run the worker process to evaluate points.
 
         This process receives tasks from the coordinator process, evaluates them and
@@ -402,12 +406,14 @@ class EgoAsync(OptimisationBase):
                 f"Worker {self.mpi_rank} sending results ({results})"
             )
             self.mpi_comm.send(results, dest=0, tag=22)
-        return {}
+
+        # Typed as EvaluatedPoint for the user on rank 0, see #59
+        return cast(EvaluatedPoint, {})
 
     def _add_tasks_to_workers(
         self,
         free_workers: list[int],
-        pending_points: list[dict],
+        pending_points: list[Point],
         surrogate_updated: bool,
         surrogate: SurrogateBase,
         infill: InfillBase,
