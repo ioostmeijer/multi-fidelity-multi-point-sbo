@@ -64,6 +64,10 @@ Requires **Python 3.11 to 3.14**, and an MPI implementation (OpenMPI, MPICH or M
 pip install -e .    # the package, its runtime dependencies and the benchmark problems
 ```
 
+Or install a released version without cloning the repository: from version 1.2.0 on, every
+[GitHub Release](https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/releases) has the wheel attached, e.g.
+`pip install https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/releases/download/v1.2.0/multi_fidelity_multi_point_sbo-1.2.0-py3-none-any.whl`.
+
 To install the exact, locked environment with [uv](https://docs.astral.sh/uv/):
 
 ```bash

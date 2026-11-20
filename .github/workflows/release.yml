@@ -1,0 +1,141 @@
+name: Release
+
+# Creates the GitHub Release (and its tag vX.Y.Z) for the version in pyproject.toml when it is merged into `main`, with
+# the CHANGELOG.md section of that version as its text and the wheel and sdist attached. No PyPI publishing.
+# The tests are not run again: `main` only accepts pull requests that passed the required checks (CI, extended tests,
+# pre-commit, docs build). A push to `main` without a new version (the tag already exists) creates no release.
+#
+# Run it manually on another branch (Actions -> Release -> Run workflow, or `gh workflow run release.yml --ref
+# <branch>`) to create a pre-release; this only accepts a pre-release version (e.g. 1.2.0rc1), with the [Unreleased]
+# section as its text. Delete a test release with `gh release delete v1.2.0rc1 --cleanup-tag`.
+# (A manual run needs this file on main. Before that, test it on a throwaway branch: add the branch under `push`.)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Check the version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      release: ${{ steps.version.outputs.release }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # On main: a final version (X.Y.Z). On any other branch: a pre-release version.
+      - name: Read the version and check the tag
+        id: version
+        run: |
+          VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          TAG="v$VERSION"
+
+          # PEP 440 pre-releases: 1.2.0a1, 1.2.0b1, 1.2.0rc1, 1.2.0.dev1
+          if [[ "$VERSION" =~ (a|b|rc|\.dev)[0-9]+$ ]]; then PRERELEASE=true; else PRERELEASE=false; fi
+
+          if [[ "$GITHUB_REF" == "refs/heads/main" && "$PRERELEASE" == "true" ]]; then
+            echo "::error::main has the pre-release version $VERSION; merge a final version (X.Y.Z) into main."
+            exit 1
+          fi
+          if [[ "$GITHUB_REF" != "refs/heads/main" && "$PRERELEASE" == "false" ]]; then
+            echo "::error::Outside main only a pre-release (e.g. 1.2.0rc1) is created, not $VERSION; a release is created by merging into main."
+            exit 1
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
+            if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+              echo "::notice::The tag $TAG already exists: no new version, so no release."
+              RELEASE=false
+            else
+              echo "::error::The tag $TAG already exists; bump the pre-release version."
+              exit 1
+            fi
+          else
+            RELEASE=true
+          fi
+
+          echo "Version $VERSION, pre-release: $PRERELEASE, release: $RELEASE"
+          {
+            echo "version=$VERSION"
+            echo "prerelease=$PRERELEASE"
+            echo "release=$RELEASE"
+          } >> "$GITHUB_OUTPUT"
+
+  release:
+    name: Build and release
+    needs: version
+    if: needs.version.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      PRERELEASE: ${{ needs.version.outputs.prerelease }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.14"
+
+      - name: Build the wheel and sdist
+        run: uv build
+
+      - name: Check the wheel in a clean environment
+        run: |
+          WHEEL=$(ls dist/*.whl)
+          cd "$RUNNER_TEMP"
+          uv run --isolated --no-project --with "$GITHUB_WORKSPACE/$WHEEL" python - <<'EOF'
+          import importlib.metadata
+          import importlib.resources
+          import os
+
+          import sbo
+
+          version = importlib.metadata.version("multi-fidelity-multi-point-sbo")
+          assert version == os.environ["VERSION"], f"installed version {version}"
+          assert importlib.resources.files("sbo").joinpath("py.typed").is_file(), "py.typed missing"
+          print(f"sbo {version} from {sbo.__file__}")
+          EOF
+
+      - name: Extract the release notes from CHANGELOG.md
+        run: |
+          if [[ "$PRERELEASE" == "true" ]]; then SECTION="Unreleased"; else SECTION="$VERSION"; fi
+          awk -v heading="## [$SECTION]" '
+            index($0, heading) == 1 { found = 1; print; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+
+          if [[ $(grep -c '[^[:space:]]' "$RUNNER_TEMP/notes.md") -lt 2 ]]; then
+            echo "::error::CHANGELOG.md has no (or an empty) section '## [$SECTION]'."
+            exit 1
+          fi
+          cat "$RUNNER_TEMP/notes.md"
+
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ARGS=()
+          if [[ "$PRERELEASE" == "true" ]]; then ARGS+=(--prerelease); fi
+          gh release create "v$VERSION" dist/* \
+            --title "v$VERSION" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            --target "$GITHUB_SHA" \
+            "${ARGS[@]}"

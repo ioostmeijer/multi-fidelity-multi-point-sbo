@@ -106,6 +106,7 @@ from the matrix and runs one session, e.g. `nox -s "tests-${{ matrix.python-vers
 | `docs.yml`           | Pushes to `main` and all pull requests                     | Builds the docs; deploys them on `main`                               | `build`                 |
 | `audit.yml`          | Dependency changes to `main` and `dev`; weekly             | `uv audit` on the locked dependencies (all groups)                    | -                       |
 | `project-in-dev.yml` | Merged pull requests into `dev`                            | Moves the linked issues (`Part of #N`) to In dev on the project board | -                       |
+| `release.yml`        | Pushes to `main`; manually on any branch (pre-release)     | Builds the wheel and sdist and creates the GitHub Release             | -                       |
 
 `ci.yml` and `extended.yml` start with a `changes` job (the shared `.github/actions/detect-code-changes` action), which
 checks whether `src/`, `tests/`, `pyproject.toml`, `uv.lock`, `noxfile.py`, the shared actions or the workflow itself
@@ -119,6 +120,42 @@ The extended tests are slow, so they run on a pull request to `main` only once i
 as a draft while you are still pushing to it, then mark it **Ready for review** to run them; a later push cancels the
 run in progress and starts a new one. They aren't run again on the merge commit. To run them on another branch, open
 **Actions → Extended tests → Run workflow** and select the branch, or run `gh workflow run extended.yml --ref <branch>`.
+
+## Releasing
+
+A release is made by merging `dev` into `main` with a new version; `release.yml` then creates the tag and the GitHub
+Release. Don't create release tags by hand. To prepare a release, in a pull request into `dev` (or the release pull
+request into `main`):
+
+1. Set the new version in `pyproject.toml` (`X.Y.Z`, see [Semantic Versioning](https://semver.org/spec/v2.0.0.html)).
+2. In `CHANGELOG.md`, rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`, add a new empty `## [Unreleased]` above it,
+    and update the links at the bottom (`[X.Y.Z]` and the `[unreleased]` compare link).
+
+When the pull request into `main` is merged (after the required checks passed), `release.yml`:
+
+- reads the version from `pyproject.toml`; if the tag `vX.Y.Z` already exists, nothing is released (e.g. a merge without
+    a new version);
+- builds the sdist and the wheel with `uv build`, and checks the wheel in a clean environment (installs, imports, has
+    the right version and `py.typed`);
+- creates the tag `vX.Y.Z` and the GitHub Release, with the `## [X.Y.Z]` section of `CHANGELOG.md` as its text and the
+    wheel and sdist attached. It fails if the section is missing or empty, or if the release already exists.
+
+The tests are not run again: `main` only accepts pull requests that passed them. The package is not published on PyPI.
+
+### Testing a Release
+
+A pre-release version ([PEP 440](https://peps.python.org/pep-0440/): `1.2.0.dev1`, `1.2.0a1`, `1.2.0b1`, `1.2.0rc1`)
+comes before the final `1.2.0`; pip skips it unless asked (`--pre`), and GitHub labels it **Pre-release** and doesn't
+mark it as the latest release. Use one to test the release workflow without making a real release. Outside `main`,
+`release.yml` only accepts a pre-release version (and on `main` only a final version), and uses the `## [Unreleased]`
+section as its text.
+
+1. On a throwaway branch, set the version in `pyproject.toml` to a pre-release, e.g. `1.2.0rc1`.
+2. Run the workflow on that branch: **Actions → Release → Run workflow**, or
+    `gh workflow run release.yml --ref <branch>`. A manual run needs `release.yml` on `main`; to test a change to the
+    workflow itself, also add the branch under `on: push: branches:` in `release.yml` on that branch, and push.
+3. Check the pre-release and its files, then remove it with `gh release delete v1.2.0rc1 --cleanup-tag`, and delete the
+    branch.
 
 ## Dependencies
 
