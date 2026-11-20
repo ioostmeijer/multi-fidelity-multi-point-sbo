@@ -2,12 +2,15 @@ import copy
 import os
 import pickle
 import time
-from typing import Any, Callable, Union
+import warnings
+from collections.abc import Sequence
+from typing import Any, Callable, Union, cast
 
 import numpy as np
 
 from ..infill import InfillBase
 from ..surrogate import SurrogateBase
+from ..types import EvaluatedPoint, FunctionCalls, InfillResult, Point, Task
 from ..utils import Base
 from ..utils._mpi import MPI
 
@@ -75,7 +78,7 @@ class OptimisationBase(Base):
 
     def solve(
         self, surrogate: SurrogateBase, infill: InfillBase, *args, **kwargs
-    ) -> dict:
+    ) -> EvaluatedPoint:
         """Run the optimisation process using the provided surrogate model and infill.
 
         Parameters
@@ -87,9 +90,8 @@ class OptimisationBase(Base):
 
         Returns
         -------
-        dict
-            A dictionary containing the result of the optimisation process.
-            ({'coord': np.ndarray, 'value': float})
+        EvaluatedPoint
+            The best point found. With MPI, worker processes return an empty dict.
 
         Raises
         ------
@@ -104,51 +106,43 @@ class OptimisationBase(Base):
         raise NotImplementedError(msg)
 
     def evaluate_point(
-        self, point: dict, inplace: bool = False, bypass_delay: bool = False
-    ) -> dict:
+        self, point: Point, inplace: bool = False, bypass_delay: bool = False
+    ) -> EvaluatedPoint:
         """Evaluate a given point using the objective function.
 
         Parameters
         ----------
         point
-            A dictionary containing the point to be evaluated.
-            ({'coord': np.ndarray, "fid": int})
+            The point to be evaluated. If it has a start_time, that is kept.
         inplace
-            If True, the evaluation result is added to the input point dictionary.
-            If False, a new dictionary is returned with the evaluation result.
+            Deprecated, will be removed in version 2.0.0: use the returned point
+            instead. If True, the evaluation result is also written into the given
+            point.
         bypass_delay
             If True, the delay specified will be skipped.
 
         Returns
         -------
-        dict
-            A dictionary containing the evaluated point and its objective value.
-            ({'coord': np.ndarray, "fid": int, 'value': float})
+        EvaluatedPoint
+            A new point with the function value, the MPI rank and the start and end
+            time of the evaluation (with inplace=True: the given point).
         """
-        # Add starting time to point if not already present
         if inplace:
-            if "start_time" not in point:
-                point["start_time"] = time.time()
-            if MPI is not None:
-                point["mpi_rank"] = MPI.COMM_WORLD.Get_rank()
-            else:
-                point["mpi_rank"] = 0
-        elif not inplace:
-            evaluated_point = copy.deepcopy(point)
-            if "start_time" not in evaluated_point:
-                evaluated_point["start_time"] = time.time()
-            if MPI is not None:
-                evaluated_point["mpi_rank"] = MPI.COMM_WORLD.Get_rank()
-            else:
-                evaluated_point["mpi_rank"] = 0
+            warnings.warn(
+                "The inplace argument of evaluate_point is deprecated and will be "
+                "removed in version 2.0.0; use the returned point instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        # Keep the start time if it was set before (e.g. when the point was sent to
+        # a worker)
+        start_time = point.get("start_time", time.time())
+        mpi_rank = MPI.COMM_WORLD.Get_rank() if MPI is not None else 0
 
         fidelity = point["fid"]
         func = self.config.functions[fidelity]
         value = func(point["coord"])[0]
-        if inplace:
-            point["value"] = value
-        else:
-            evaluated_point["value"] = value
 
         # Pause if a function delay is set
         function_delay = self.config.get("function_delay", None)
@@ -173,14 +167,22 @@ class OptimisationBase(Base):
             else:
                 time.sleep(delay)
 
-        if inplace:
-            point["end_time"] = time.time()
-            return point
-        else:
-            evaluated_point["end_time"] = time.time()
+        evaluated_point: EvaluatedPoint = {
+            **(point if inplace else copy.deepcopy(point)),
+            "start_time": start_time,
+            "mpi_rank": mpi_rank,
+            "value": value,
+            "end_time": time.time(),
+        }
+        if not inplace:
             return evaluated_point
 
-    def _count_final_evaluation(self, function_calls: dict) -> None:
+        # Deprecated: write the result into the given point as well
+        result = cast(EvaluatedPoint, point)
+        result.update(evaluated_point)
+        return result
+
+    def _count_final_evaluation(self, function_calls: FunctionCalls) -> None:
         """Count the final HF evaluation of the surrogate optimum.
 
         The stopping criteria on function calls reserve one HF call for this
@@ -199,7 +201,7 @@ class OptimisationBase(Base):
     def _calc_stopping_criteria(
         self,
         iteration: int | str,
-        function_call: dict,
+        function_call: FunctionCalls,
         best_val: float,
         infill_value: float,
         total_data: dict,
@@ -355,15 +357,15 @@ class OptimisationBase(Base):
     def _run_end_iteration(
         self,
         iteration: int | str,
-        function_calls: dict,
+        function_calls: FunctionCalls,
         best_val: float,
         prev_best_val: float,
         infill_value: float,
         best_coord: np.ndarray,
         surrogate: SurrogateBase,
         start_time_iteration: float,
-        current_surrogate_optimum: dict,
-        prev_surrogate_optimum: dict,
+        current_surrogate_optimum: EvaluatedPoint,
+        prev_surrogate_optimum: EvaluatedPoint | None = None,
     ) -> bool:
         """Handle the end of an optimisation iteration, saving data and checking.
 
@@ -393,7 +395,9 @@ class OptimisationBase(Base):
         current_surrogate_optimum
             The current optimum of the surrogate model.
         prev_surrogate_optimum
-            The previous optimum of the surrogate model.
+            The previous optimum of the surrogate model (None in the first iteration).
+            Not used: the convergence criteria read the earlier optima from the
+            optimisation data.
 
         Returns
         -------
@@ -451,8 +455,11 @@ class OptimisationBase(Base):
             pickle.dump(self._optimisation_data, f)
 
     def _kriging_believer(
-        self, surrogate: SurrogateBase, infill: InfillBase, sample_locations: list[dict]
-    ) -> tuple[list[list[dict]], float]:
+        self,
+        surrogate: SurrogateBase,
+        infill: InfillBase,
+        sample_locations: list[Point],
+    ) -> InfillResult:
         """Kriging Believer (KB) method.
 
         This method enables the use of KB in the optimisation process.
@@ -470,14 +477,13 @@ class OptimisationBase(Base):
         infill
             An instance of an infill criterion.
         sample_locations
-            A list of dictionaries containing the sample locations to be added.
-            ({'coord': np.ndarray, "fid": int})
+            The pending points, added with a lie as their value.
 
         Returns
         -------
-        tuple[list[list[dict]], float]
-            A tuple containing a list of new sample locations and the infill value.
-            (list of list of dict, float)
+        InfillResult
+            The new tasks and the infill value (inf, so the optimisation can not stop
+            on it).
         """
         # Create a copy of the surrogate data
         original_data = [
@@ -491,7 +497,7 @@ class OptimisationBase(Base):
         # fidelity of the pending point. A surrogate that can not predict per
         # fidelity gets the HF prediction as lie for every point.
         supports_fidelity = getattr(surrogate, "supports_fidelity_prediction", False)
-        new_training_data = []
+        new_training_data: list[EvaluatedPoint] = []
         n_lf_with_hf_lie = 0
         for point in sample_locations:
             correct_coord = np.array(point["coord"]).reshape(1, -1)
@@ -535,8 +541,11 @@ class OptimisationBase(Base):
         return new_point, float("inf")
 
     def _constant_liar(
-        self, surrogate: SurrogateBase, infill: InfillBase, sample_locations: list[dict]
-    ) -> tuple[list[list[dict]], float]:
+        self,
+        surrogate: SurrogateBase,
+        infill: InfillBase,
+        sample_locations: list[Point],
+    ) -> InfillResult:
         """Constant Liar (CL) method.
 
         This method enables the use of CL in the optimisation process. First it adds the
@@ -554,14 +563,13 @@ class OptimisationBase(Base):
         infill
             An instance of an infill criterion.
         sample_locations
-            A list of dictionaries containing the sample locations to be added.
-            ({'coord': np.ndarray, "fid": int})
+            The pending points, added with a lie as their value.
 
         Returns
         -------
-        tuple[list[list[dict]], float]
-            A tuple containing a list of new sample locations and the infill value.
-            (list of list of dict, float)
+        InfillResult
+            The new tasks and the infill value (inf, so the optimisation can not stop
+            on it).
 
         Raises
         ------
@@ -577,7 +585,7 @@ class OptimisationBase(Base):
         original_model = copy.deepcopy(surrogate._model)
 
         # Get the values for the highest fidelity with samples
-        values = []
+        values: list[float] = []
         for fid in range(self.config.num_fidelities):
             if len(surrogate.samples.get(fid, [])) > 0:
                 values = [point["value"] for point in surrogate.samples[fid]]
@@ -604,9 +612,10 @@ class OptimisationBase(Base):
         lie_value = func(values)
 
         # Set new training data with lie values
-        surrogate.add_training_data(
-            [{**point, "value": lie_value} for point in sample_locations]
-        )
+        lie_points: list[EvaluatedPoint] = [
+            {**point, "value": lie_value} for point in sample_locations
+        ]
+        surrogate.add_training_data(lie_points)
 
         # Train the surrogate with the new data
         surrogate.train()
@@ -625,10 +634,10 @@ class OptimisationBase(Base):
 
     def _remove_duplicates(
         self,
-        tasks: list[list[dict]],
+        tasks: list[Task],
         surrogate: SurrogateBase,
-        pending_points: list[dict] | None = None,
-    ) -> list[list[dict]]:
+        pending_points: list[Point] | None = None,
+    ) -> list[Task]:
         """Remove duplicate points from the list of tasks.
 
         This method checks the proposed new points against the existing samples in the
@@ -640,31 +649,27 @@ class OptimisationBase(Base):
         Parameters
         ----------
         tasks
-            A list of tasks, where each task is a list of dictionaries containing the
-            proposed new points. ({'coord': np.ndarray, "fid": int})
+            The proposed tasks; each task is a list of new points.
         surrogate
             An instance of a surrogate model.
         pending_points
-            A list of dictionaries containing the points that are currently pending
-            evaluation. ({'coord': np.ndarray, "fid": int})
+            The points that are currently pending evaluation.
 
         Returns
         -------
-        list[list[dict]]
-            A list of tasks with duplicate points removed. Each task is a list of
-            dictionaries containing the proposed new points.
-            ({'coord': np.ndarray, "fid": int})
+        list[Task]
+            The tasks with the duplicate points replaced.
         """
         if pending_points is None:
             pending_points = []
 
         # Points accepted so far in this batch. A new point is also a duplicate if it
         # equals a point proposed earlier in the same batch.
-        accepted: list[dict] = []
+        accepted: list[Point] = []
         n_duplicates = 0
 
         for tsk_index, task in enumerate(tasks):
-            new_task = []
+            new_task: Task = []
             for point in task:
                 taken = pending_points + accepted
                 if not self._check_point_included(point, surrogate, taken):
@@ -685,8 +690,8 @@ class OptimisationBase(Base):
         return tasks
 
     def _replace_duplicate(
-        self, duplicate: dict, surrogate: SurrogateBase, taken: list[dict]
-    ) -> dict:
+        self, duplicate: Point, surrogate: SurrogateBase, taken: list[Point]
+    ) -> Point:
         """Get a replacement for a duplicate point.
 
         The replacement is the same location at a higher fidelity, if that is not a
@@ -695,7 +700,7 @@ class OptimisationBase(Base):
         Parameters
         ----------
         duplicate
-            The duplicate point. ({'coord': np.ndarray, "fid": int})
+            The duplicate point.
         surrogate
             An instance of a surrogate model.
         taken
@@ -703,12 +708,12 @@ class OptimisationBase(Base):
 
         Returns
         -------
-        dict
-            The replacement point. ({'coord': np.ndarray, "fid": int})
+        Point
+            The replacement point.
         """
         # Try to replace with same location but a higher fidelity
         for new_fid in range(duplicate["fid"] - 1, -1, -1):
-            replacement_point = {**duplicate, "fid": new_fid}
+            replacement_point: Point = {**duplicate, "fid": new_fid}
             if not self._check_point_included(replacement_point, surrogate, taken):
                 self.config.logger.info(
                     f"Replacing duplicate point {duplicate} with higher fidelity "
@@ -718,7 +723,7 @@ class OptimisationBase(Base):
 
         while True:
             # Replace with a random point
-            random_point = {
+            random_point: Point = {
                 "coord": self.config.rng.uniform(self.config.lb, self.config.ub),
                 "fid": self.config.num_fidelities - 1,
             }
@@ -730,7 +735,10 @@ class OptimisationBase(Base):
                 return random_point
 
     def _check_point_included(
-        self, point: dict, surrogate: SurrogateBase, pending_points: list[dict] | None
+        self,
+        point: Point,
+        surrogate: SurrogateBase,
+        pending_points: Sequence[Point] | None,
     ) -> bool:
         """Check if a point is included in the surrogate samples or pending points.
 
@@ -741,13 +749,11 @@ class OptimisationBase(Base):
         Parameters
         ----------
         point
-            A dictionary containing the point to be checked.
-            ({'coord': np.ndarray, "fid": int})
+            The point to be checked.
         surrogate
             An instance of a surrogate model.
         pending_points
-            A list of dictionaries containing the points that are currently pending
-            evaluation. ({'coord': np.ndarray, "fid": int})
+            The points that are currently pending evaluation.
 
         Returns
         -------
@@ -770,7 +776,7 @@ class OptimisationBase(Base):
         )
         return in_samples or in_pending
 
-    def _points_equal(self, a: dict, b: dict) -> bool:
+    def _points_equal(self, a: Point, b: Point) -> bool:
         """Helper that returns True when points are equal, False otherwise.
 
         Points are equal if all coordinates are within 1e-4 of UB - LB.
@@ -795,7 +801,7 @@ class OptimisationBase(Base):
 
     def __call__(
         self, surrogate: SurrogateBase, infill: InfillBase, *args, **kwargs
-    ) -> dict:
+    ) -> EvaluatedPoint:
         """Run the optimisation process using the provided surrogate model and infill.
 
         Parameters
@@ -807,8 +813,7 @@ class OptimisationBase(Base):
 
         Returns
         -------
-        dict
-            A dictionary containing the result of the optimisation process.
-            ({'coord': np.ndarray, 'value': float})
+        EvaluatedPoint
+            The best point found. With MPI, worker processes return an empty dict.
         """
         return self.solve(surrogate, infill, *args, **kwargs)

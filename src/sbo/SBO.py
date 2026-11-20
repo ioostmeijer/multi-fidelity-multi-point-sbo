@@ -2,7 +2,8 @@ import copy
 import importlib
 import math
 import os
-from typing import Literal, overload
+from collections.abc import Sequence
+from typing import Literal, cast, overload
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -14,6 +15,7 @@ from smt.sampling_methods import LHS
 from .infill import InfillBase
 from .optimisation import OptimisationBase
 from .surrogate import SurrogateBase
+from .types import EvaluatedPoint, Point
 from .utils import Config
 from .utils._mpi import MPI
 
@@ -53,7 +55,11 @@ class SBO:
     """
 
     def __init__(
-        self, config: Config, *args, initial_samples: list[dict] | None = None, **kwargs
+        self,
+        config: Config,
+        *args,
+        initial_samples: list[EvaluatedPoint] | None = None,
+        **kwargs,
     ) -> None:
         """Initialise the SBO class.
 
@@ -62,10 +68,16 @@ class SBO:
         config
             The configuration object containing settings for the SBO process.
         initial_samples
-            Optional initial samples to set in the surrogate model.
+            Optional initial samples to set in the surrogate model, each with 'coord',
+            'fid' and 'value'.
+
+        Raises
+        ------
+        ValueError
+            If an initial sample misses a key or has an invalid fidelity level.
         """
         self.config: Config = config
-        self._optimum: dict | None = None
+        self._optimum: EvaluatedPoint | None = None
 
         self._infill: InfillBase = self._initialise_component(
             *args,
@@ -103,6 +115,7 @@ class SBO:
             if not initial_samples:
                 initial_samples = self._get_initial_samples()
             else:
+                self._check_initial_samples(initial_samples)
                 initial_samples = self._ensure_enough_initial_samples(initial_samples)
 
             # If MPI is used, send initial samples to other ranks
@@ -138,7 +151,41 @@ class SBO:
         #         self._constraint_surrogates[k].append(constr_surr)
         # self.config.surrogate_constraints = self._constraint_surrogates
 
-    def _get_initial_samples(self) -> list[dict]:
+    def _check_initial_samples(self, initial_samples: list[EvaluatedPoint]) -> None:
+        """Check that the initial samples given by the user are complete.
+
+        Parameters
+        ----------
+        initial_samples
+            The initial samples to check.
+
+        Raises
+        ------
+        ValueError
+            If a sample misses 'coord', 'fid' or 'value', or its fidelity level is not
+            an integer between 0 and the number of fidelities - 1.
+        """
+        n_fidelities = self.config.num_fidelities
+        for i, sample in enumerate(initial_samples):
+            missing = [key for key in ("coord", "fid", "value") if key not in sample]
+            if missing:
+                msg = (
+                    f"Initial sample {i} misses the key(s) {missing}; every sample "
+                    f"needs 'coord', 'fid' and 'value' (got the keys {list(sample)})."
+                )
+                self.config.logger.error(msg)
+                raise ValueError(msg)
+
+            fid = sample["fid"]
+            if not isinstance(fid, (int, np.integer)) or not 0 <= fid < n_fidelities:
+                msg = (
+                    f"Initial sample {i} has the fidelity level {fid!r}; it must be an "
+                    f"integer from 0 (HF) to {n_fidelities - 1}."
+                )
+                self.config.logger.error(msg)
+                raise ValueError(msg)
+
+    def _get_initial_samples(self) -> list[EvaluatedPoint]:
         """Generate the list of initial samples, if required.
 
         Generate the list of initial samples, based on LHS. This uses the LHS method
@@ -146,7 +193,7 @@ class SBO:
 
         Returns
         -------
-        list[dict]
+        list[EvaluatedPoint]
             A list of all the initial points.
         """
         self.config.logger.info("Getting initial samples.")
@@ -156,7 +203,7 @@ class SBO:
                 seed=self.config.get("random_seed"),
             )
             x_init = lhs(self.config.settings["number_initial_samples"])
-            initial_samples = [
+            initial_samples: list[EvaluatedPoint] = [
                 {
                     "coord": x_init[i],
                     "value": self.config.functions[0](x_init[i])[0],
@@ -206,7 +253,9 @@ class SBO:
 
         return initial_samples
 
-    def _ensure_enough_initial_samples(self, initial_samples: list[dict]) -> list[dict]:
+    def _ensure_enough_initial_samples(
+        self, initial_samples: list[EvaluatedPoint]
+    ) -> list[EvaluatedPoint]:
         """Ensure there are enough initial samples for each fidelity.
 
         Parameters
@@ -216,7 +265,7 @@ class SBO:
 
         Returns
         -------
-        list[dict]
+        list[EvaluatedPoint]
             The augmented list of initial samples with at least 2 samples per fidelity.
         """
         # Work on a copy, so the list passed by the user is not changed
@@ -234,7 +283,7 @@ class SBO:
                 # Scale to bounds
                 x_new = x_new * (self.config.ub - self.config.lb) + self.config.lb
                 if not any(np.allclose(x_new, p["coord"]) for p in initial_samples):
-                    new_sample = {
+                    new_sample: EvaluatedPoint = {
                         "coord": x_new,
                         "value": self.config.functions[fid](x_new)[0],
                         "fid": fid,
@@ -245,7 +294,7 @@ class SBO:
                     if self.config["nested"] and fid != self.config.num_fidelities - 1:
                         # Add lower fidelity samples
                         for lower_fid in range(fid + 1, self.config.num_fidelities):
-                            new_lower_sample = {
+                            new_lower_sample: EvaluatedPoint = {
                                 "coord": x_new,
                                 "value": self.config.functions[lower_fid](x_new)[0],
                                 "fid": lower_fid,
@@ -315,7 +364,7 @@ class SBO:
             raise ImportError(msg) from e
 
     @property
-    def optimum(self) -> dict:
+    def optimum(self) -> EvaluatedPoint:
         """Get the optimum solution found by the SBO process.
 
         Runs the optimisation first if it has not run yet, or if the used algorithms
@@ -323,8 +372,8 @@ class SBO:
 
         Returns
         -------
-        dict
-            The optimum solution point ({'coord': np.ndarray, 'value': float, ...}).
+        EvaluatedPoint
+            The optimum solution point. With MPI, the other ranks get an empty dict.
         """
         if (
             self._optimum is None
@@ -353,13 +402,13 @@ class SBO:
             _ = self.run()
         return self._optimisation.optimisation_data
 
-    def run(self) -> dict:
+    def run(self) -> EvaluatedPoint:
         """Execute the SBO process and return the optimum solution.
 
         Returns
         -------
-        dict
-            The optimum solution point ({'coord': np.ndarray, 'value': float}).
+        EvaluatedPoint
+            The optimum solution point. With MPI, the other ranks get an empty dict.
         """
         if self.config.used_algorithms != self._backup_used_alg:
             self.update_used_algorithms(self.config.used_algorithms)
@@ -369,7 +418,8 @@ class SBO:
         # don't run the optimisation again.
         if MPI is not None and MPI.COMM_WORLD.Get_rank() != 0:
             self._optimisation(surrogate=self._surrogate, infill=self._infill)
-            self._optimum = {}
+            # Typed as EvaluatedPoint for the user on rank 0, see #59
+            self._optimum = cast(EvaluatedPoint, {})
             return self._optimum
 
         if (
@@ -451,13 +501,13 @@ class SBO:
         # config.used_algorithms, so sync the backup with the config afterwards.
         self._backup_used_alg = copy.deepcopy(self.config.used_algorithms)
 
-    def __call__(self) -> dict:
+    def __call__(self) -> EvaluatedPoint:
         """Allow the SBO instance to be called directly to get the optimum solution.
 
         Returns
         -------
-        dict
-            The optimum solution point ({'coord': np.ndarray, 'value': float}).
+        EvaluatedPoint
+            The optimum solution point. With MPI, the other ranks get an empty dict.
         """
         return self.optimum
 
@@ -602,7 +652,7 @@ class SBO:
                     return f"Time elapsed: {time_elapsed:.1f} sec"
             return f"Iteration {int(iteration_key) + 1}"
 
-        def _contains_point(point: dict, points: list[dict]) -> bool:
+        def _contains_point(point: Point, points: Sequence[Point]) -> bool:
             """Check whether a point (by coordinates) is in a list of points.
 
             Comparing the dicts with `in` fails for multi-element NumPy arrays.

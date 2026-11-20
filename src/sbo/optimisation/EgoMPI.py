@@ -1,8 +1,10 @@
 import copy
 from time import time
+from typing import cast
 
 from ..infill import InfillBase
 from ..surrogate import SurrogateBase
+from ..types import EvaluatedPoint, FunctionCalls
 from ..utils import Config
 from ..utils._mpi import MPI
 from .Base import OptimisationBase
@@ -104,7 +106,7 @@ class EgoMPI(OptimisationBase):
 
     def solve(
         self, surrogate: SurrogateBase, infill: InfillBase, *args, **kwargs
-    ) -> dict:
+    ) -> EvaluatedPoint:
         """Run the MPI EGO Optimisation algorithm.
 
         Parameters
@@ -116,9 +118,9 @@ class EgoMPI(OptimisationBase):
 
         Returns
         -------
-        dict
-            The best point found on the coordinator process,
-            empty dict on worker processes.
+        EvaluatedPoint
+            The best point found on the coordinator process, an empty dict on the
+            worker processes.
 
         Raises
         ------
@@ -137,7 +139,9 @@ class EgoMPI(OptimisationBase):
             return self._solve_coordinator(surrogate, infill)
         return self._solve_worker()
 
-    def _solve_coordinator(self, surrogate: SurrogateBase, infill: InfillBase) -> dict:
+    def _solve_coordinator(
+        self, surrogate: SurrogateBase, infill: InfillBase
+    ) -> EvaluatedPoint:
         """Solve the coordinator process.
 
         The coordinator process first selects the new sample locations based on the
@@ -157,9 +161,9 @@ class EgoMPI(OptimisationBase):
 
         Returns
         -------
-        dict
+        EvaluatedPoint
             The best point found: the best HF sample, or the evaluated surrogate optimum
-            if that is better ({'coord': np.ndarray, 'value': float, 'fid': 0, ...}).
+            if that is better.
         """
         # Check if the number of new points exceeds the rank size
         if self.config["number_new_points"] > self.mpi_size:
@@ -185,9 +189,11 @@ class EgoMPI(OptimisationBase):
         # setup counters
         iteration = 0
         best_value = float("inf")
-        curr_surr_opt = {"coord": None, "value": float("inf")}
+        curr_surr_opt: EvaluatedPoint | None = None
         start_time = time()
-        function_calls = dict.fromkeys(range(self.config.num_fidelities), 0)
+        function_calls: FunctionCalls = dict.fromkeys(
+            range(self.config.num_fidelities), 0
+        )
 
         # Start optimisation
         self.config.logger.info("Starting EGO MPI optimisation loop.")
@@ -239,14 +245,16 @@ class EgoMPI(OptimisationBase):
             task = self.mpi_comm.scatter(tasks, root=0)
 
             # Calculate own task
-            result = [self.evaluate_point(point, inplace=False) for point in task]
+            result = [self.evaluate_point(point) for point in task]
 
             # Gather results
-            results = self.mpi_comm.gather(result, root=0)
-            if results is None:
+            gathered: list[list[EvaluatedPoint]] | None = self.mpi_comm.gather(
+                result, root=0
+            )
+            if gathered is None:
                 self.config.logger.error("No results received from worker processes.")
                 raise RuntimeError("No results received from worker processes.")
-            results = [point for task in results for point in task]
+            results = [point for worker_result in gathered for point in worker_result]
             self.config.logger.debug("Received results from worker processes.")
 
             # Add results to the surrogate
@@ -260,7 +268,7 @@ class EgoMPI(OptimisationBase):
 
             # Update function calls
             for point in results:
-                fid_point = int(point["fid"])
+                fid_point = point["fid"]
                 function_calls[fid_point] = function_calls.get(fid_point, 0) + 1
 
             # Finish iteration and calculate stopping criteria
@@ -288,8 +296,8 @@ class EgoMPI(OptimisationBase):
 
         # Calculate the best point, add to dict
         best_point = min(surrogate.samples[0], key=lambda p: p["value"])
-        surr_opt = {**surrogate.get_optimum(), "fid": 0}
-        surr_opt = self.evaluate_point(surr_opt, inplace=False, bypass_delay=True)
+        final_surr_opt: EvaluatedPoint = {**surrogate.get_optimum(), "fid": 0}
+        surr_opt = self.evaluate_point(final_surr_opt, bypass_delay=True)
         self._count_final_evaluation(function_calls)
         if surr_opt["value"] < best_point["value"]:
             best_point = surr_opt
@@ -308,7 +316,7 @@ class EgoMPI(OptimisationBase):
         # return the optimum
         return best_point
 
-    def _solve_worker(self) -> dict:
+    def _solve_worker(self) -> EvaluatedPoint:
         """Solve the MPI EGO as worker.
 
         The worker receives tasks from the coordinator rank, calculates their values and
@@ -329,10 +337,11 @@ class EgoMPI(OptimisationBase):
             self.config.logger.debug(
                 f"Worker {self.mpi_rank} starting calculations for {len(task)} points."
             )
-            result = [self.evaluate_point(point, inplace=False) for point in task]
+            result = [self.evaluate_point(point) for point in task]
             self.config.logger.debug(f"Worker {self.mpi_rank} finished calculations.")
 
             # Send the results
             self.mpi_comm.gather(result, root=0)
 
-        return {}
+        # Typed as EvaluatedPoint for the user on rank 0, see #59
+        return cast(EvaluatedPoint, {})

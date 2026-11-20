@@ -6,6 +6,7 @@ from scipy.spatial.distance import jensenshannon
 from scipy.stats import norm
 
 from ..surrogate import SurrogateBaseWithVariancePerFidelity
+from ..types import InfillResult, Task
 from .Base import InfillBase
 
 
@@ -113,7 +114,7 @@ class TwoStep(InfillBase[SurrogateBaseWithVariancePerFidelity]):
 
     def get_new_points(
         self, surrogate: SurrogateBaseWithVariancePerFidelity
-    ) -> tuple[list[list[dict]], float]:
+    ) -> InfillResult:
         """Generate new points based on the two-step approach.
 
         Parameters
@@ -123,11 +124,11 @@ class TwoStep(InfillBase[SurrogateBaseWithVariancePerFidelity]):
 
         Returns
         -------
-        tuple[list[list[dict]], float]
+        InfillResult
             The new points and the infill value. The new points are a list of
-            tasks; each task is a list of points to evaluate together
-            ({'coord': np.ndarray, 'fid': int}, fid 0 is HF). The infill value is
-            the value of the infill criterion at the selected point.
+            tasks (Task); each task is a list of points (Point) to evaluate
+            together. The infill value is the value of the infill criterion at
+            the selected point.
 
         Raises
         ------
@@ -152,7 +153,7 @@ class TwoStep(InfillBase[SurrogateBaseWithVariancePerFidelity]):
         accurate_fidelities = self._get_accurate_enough_fidelities(x_new, surrogate)
         cheapest_fidelity = max(accurate_fidelities)  # LF has higher index
 
-        new_samples = [{"coord": x_new, "fid": cheapest_fidelity}]
+        new_samples: Task = [{"coord": x_new, "fid": cheapest_fidelity}]
         return [self._return_nested_samples(new_samples)], infill_value
 
     def _get_accurate_enough_fidelities(
