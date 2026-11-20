@@ -15,6 +15,13 @@ pip install -e .    # the package, its runtime dependencies and the benchmark pr
 
 The benchmark problems (`sbo.benchmarks`) are part of the package.
 
+To install a released version without cloning the repository: from version 1.2.0 on, every
+[GitHub Release](https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/releases) has the wheel attached:
+
+```bash
+pip install https://github.com/ioostmeijer/multi-fidelity-multi-point-sbo/releases/download/v1.2.0/multi_fidelity_multi_point_sbo-1.2.0-py3-none-any.whl
+```
+
 To install the exact, locked environment with [uv](https://docs.astral.sh/uv/):
 
 ```bash

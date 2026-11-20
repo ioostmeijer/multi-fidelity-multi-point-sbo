@@ -49,6 +49,7 @@ The package supports Python 3.11 to 3.14 (`requires-python = ">=3.11,<3.15"`). T
 | `extended.yml` | Verification and end-to-end tests on Linux and Windows                                 | 3.11 and 3.14          |
 | `extended.yml` | MPI verification, MPI end-to-end tests and coverage (Linux)                            | 3.14                   |
 | `lint.yml`     | pre-commit; `docs.yml`: building the docs; `ci.yml`: deptry (once, on Linux with 3.14) | 3.14                   |
+| `release.yml`  | Building the wheel and sdist, and checking the wheel in a clean environment (Linux)    | 3.14                   |
 
 The development environment (`.venv`) uses the version in `.python-version`. To test the other versions locally, use the
 nox sessions below: each version gets its own environment. Testing the lowest and the highest version (`tests-3.11`,

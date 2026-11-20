@@ -10,6 +10,8 @@ All notable changes to this project are listed in this file. The format is based
 
 - The package ships a `py.typed` file ([PEP 561](https://peps.python.org/pep-0561/)), so type checkers such as mypy use
     its type hints in projects that use it.
+- The GitHub Releases have the wheel and sdist attached, so a released version can be installed with `pip` without
+    cloning the repository (see the installation instructions).
 
 ### Changed
 
@@ -36,6 +38,10 @@ All notable changes to this project are listed in this file. The format is based
     dev** on the project board.
 - A `codespell` pre-commit hook checks the spelling: common typos, and British spelling with a project dictionary of
     American-to-British spellings (`.codespell-en-GB.txt`), configured in `pyproject.toml`.
+- A workflow (`release.yml`) creates the GitHub Release when a new version is merged into `main`: it builds the wheel
+    and sdist, checks the wheel in a clean environment, and creates the tag `vX.Y.Z` and the release with the version's
+    `CHANGELOG.md` section as its text and the files attached. On another branch it only creates a pre-release (e.g.
+    `1.2.0rc1`), to test the workflow. See Releasing in the developer guide.
 - Ruff's security rules (`S`, flake8-bandit) are enabled; `assert` is allowed in the tests. Loading a pickle in
     `load_model_from_file` is documented as safe for trusted files only.
 - A workflow (`audit.yml`) checks the locked dependencies (`uv.lock`) for known vulnerabilities with `uv audit`, when
