@@ -102,20 +102,24 @@ class InfillBase(Base, Generic[S]):
             )
         return samples
 
-    def calc_infill_value(self, x: np.ndarray, surrogate: S, *args, **kwargs) -> float:
+    def calc_infill_value(
+        self, x: np.ndarray, surrogate: S, *args, **kwargs
+    ) -> float | np.ndarray:
         """Calculate the infill value for a given point using a flexible context.
 
         Parameters
         ----------
         x
-            The input point where the infill value is to be calculated.
+            The points where the infill value is to be calculated.
+            One point with shape (n_dim,), or n points with shape (n, n_dim).
         surrogate
             The surrogate model used for predictions.
 
         Returns
         -------
-        float
-            The calculated infill value at the given point.
+        float | np.ndarray
+            The infill value per point: a float for one point, or an array with
+            shape (n,) for n points.
 
         Raises
         ------
