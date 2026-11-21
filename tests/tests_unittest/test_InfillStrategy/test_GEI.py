@@ -54,27 +54,60 @@ def test_calc_infill_value_reduces_to_ei_for_g1() -> None:
     assert pytest.approx(expected, rel=1e-9) == val
 
 
-@pytest.mark.unit
-def test_calc_infill_value_zero_variance_returns_zero() -> None:
-    """Test if 0 is returned if variance is 0."""
+def _gei_with_g(g: int) -> GEI:
+    """Create a GEI infill strategy with exponent g, without a full Config."""
     gei = object.__new__(GEI)
-    gei.logger = _make_logger()
     gei.config = SimpleNamespace(
-        logger=_make_logger(),
-        bounds=[(0.0, 1.0)],
-        random_seed=1,
-        g=2,
+        logger=_make_logger(), get=lambda key: {"infill.g": g}[key]
     )
+    return gei
 
-    surrogate = DummySurrogateWithVariance(
-        config=dummy_config(),
-        mu=0.2,
-        var=0.0,
-        optimum_value={"coord": np.array([0.0, 1.0]), "value": [1.0]},
-    )
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("g", "mu", "expected"),
+    [
+        (0, 0.2, 1.0),  # probability of improvement: improvement is certain
+        (1, 0.2, 0.8),
+        (2, 0.2, 0.64),
+        (3, 0.2, 0.512),
+        (0, 1.5, 0.0),  # no improvement possible
+        (2, 1.5, 0.0),
+    ],
+)
+def test_calc_infill_value_zero_variance_is_certain_improvement(
+    g: int, mu: float, expected: float
+) -> None:
+    """Test that without variance the GEI is the certain improvement to the power g."""
+    surrogate = DummySurrogateWithVariance(config=dummy_config(), mu=mu, var=0.0)
     x = np.array([0.0])
 
-    assert GEI.calc_infill_value(gei, x, surrogate, best_value=1.0) == 0.0
+    val = GEI.calc_infill_value(_gei_with_g(g), x, surrogate, best_value=1.0)
+    assert val == pytest.approx(expected, rel=1e-12)
+
+
+@pytest.mark.unit
+def test_calc_infill_value_mixed_zero_variance_no_nan() -> None:
+    """Test that a point without variance in a batch gets I^g, without nan."""
+    import warnings
+
+    class _MixedVariance(DummySurrogateWithVariance):
+        def predict_values(self, x: np.ndarray, *args, **kwargs) -> np.ndarray:
+            return np.array([[0.5], [0.5], [1.5]])
+
+        def predict_variance(self, x: np.ndarray, *args, **kwargs) -> np.ndarray:
+            return np.array([[0.0], [1.0], [0.0]])
+
+    surrogate = _MixedVariance(config=dummy_config())
+    gei = _gei_with_g(2)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        val = GEI.calc_infill_value(gei, np.zeros((3, 1)), surrogate, best_value=1.0)
+
+    # g = 2 with sigma = 1: (u^2 + 1) Phi(u) + u phi(u), u = 0.5
+    expected_mid = (0.5**2 + 1) * norm.cdf(0.5) + 0.5 * norm.pdf(0.5)
+    np.testing.assert_allclose(val, [0.25, expected_mid, 0.0], rtol=1e-12)
 
 
 @pytest.mark.unit

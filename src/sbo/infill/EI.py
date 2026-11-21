@@ -125,8 +125,13 @@ class EI(InfillBase[SurrogateBaseWithVariance]):
             float
                 The negative infill value at x.
             """
-            return -self.calc_infill_value(
-                np.atleast_2d(x), surrogate, best_value=best_value, fidelity=fidelity
+            return -float(
+                self.calc_infill_value(
+                    np.atleast_2d(x),
+                    surrogate,
+                    best_value=best_value,
+                    fidelity=fidelity,
+                )
             )
 
         sample_coord, infill_value = self._select_sample_point_optimisation(
@@ -143,7 +148,7 @@ class EI(InfillBase[SurrogateBaseWithVariance]):
         best_value: float | None = None,
         fidelity: int = 0,
         **kwargs,
-    ) -> float:
+    ) -> float | np.ndarray:
         r"""Calculate EI value. Accepts optional keyword-only `best_value`.
 
         `best_value` can be provided by callers of EI; if not provided it can be
@@ -151,13 +156,14 @@ class EI(InfillBase[SurrogateBaseWithVariance]):
 
         The EI is calculated with the formula in the class docstring. A point without
         variance ($\hat{s}(x) \le 10^{-12}$) gets
-        $\mathrm{EI}(x) = \max\left(y_{\min} - \hat{y}(x), 0\right)$; if no point in
-        `x` has variance, the EI is 0.
+        $\mathrm{EI}(x) = \max\left(y_{\min} - \hat{y}(x), 0\right)$, the limit of the
+        formula for $\hat{s}(x) \to 0$: without uncertainty the improvement is certain.
 
         Parameters
         ----------
         x
-            The coordinates of the point to evaluate.
+            The points to evaluate.
+            One point with shape (n_dim,), or n points with shape (n, n_dim).
         surrogate
             The surrogate model used to evaluate the infill strategy.
         best_value
@@ -169,8 +175,9 @@ class EI(InfillBase[SurrogateBaseWithVariance]):
 
         Returns
         -------
-        float
-            The Expected Improvement value at the given point.
+        float | np.ndarray
+            The Expected Improvement per point: a float for one point, or an array with
+            shape (n,) for n points.
 
         Raises
         ------
@@ -234,8 +241,6 @@ class EI(InfillBase[SurrogateBaseWithVariance]):
             )
         variance = np.maximum(variance, 0.0)
         sigma = np.sqrt(variance)
-        if np.all(np.abs(sigma) <= 1e-12):
-            return 0.0
 
         improvement = best_value - mu
         has_variance = sigma > 1e-12
