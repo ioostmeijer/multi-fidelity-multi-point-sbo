@@ -107,7 +107,7 @@ class CEI(EI):
         best_value: float | None = None,
         fidelity: int = 0,
         **kwargs,
-    ) -> float:
+    ) -> float | np.ndarray:
         """Calculate the CEI infill values.
 
         Use the super().calc_infill_values to calculate the EI value at the passed x.
@@ -116,7 +116,8 @@ class CEI(EI):
         Parameters
         ----------
         x
-            The x-coordinate for which to calculate the CEI value
+            The points for which to calculate the CEI value.
+            One point with shape (n_dim,), or n points with shape (n, n_dim).
         surrogate
             The surrogate of the objective function to calculate the CEI value for.
             The surrogates of the expensive constraints are retrieved from the config.
@@ -130,9 +131,10 @@ class CEI(EI):
 
         Returns
         -------
-        float
-            The constrained expected improvement at x: the EI multiplied by the
-            probability that all constraints are satisfied.
+        float | np.ndarray
+            The constrained expected improvement per point: the EI multiplied by the
+            probability that all constraints are satisfied; a float for one point, or an
+            array with shape (n,) for n points.
 
         Raises
         ------

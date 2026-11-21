@@ -42,15 +42,18 @@ def test_calc_infill_value_basic() -> None:
 
 
 @pytest.mark.unit
-def test_calc_infill_value_zero_variance_returns_zero() -> None:
-    """Test that zero variance from surrogate returns EI of 0.0."""
+@pytest.mark.parametrize(("mu", "expected"), [(0.2, 0.8), (1.5, 0.0)])
+def test_calc_infill_value_zero_variance_is_positive_improvement(
+    mu: float, expected: float
+) -> None:
+    """Test that zero variance gives EI = max(best - mu, 0), the certain improvement."""
     ei = EI.__new__(EI)
     ei.config = type("Cfg", (), {"logger": _make_logger(), "num_fidelities": 1})()
 
-    surrogate = DummySurrogateWithVariance(dummy_config, mu=0.2, var=0.0)
+    surrogate = DummySurrogateWithVariance(dummy_config, mu=mu, var=0.0)
     x = np.array([0.0])
 
-    assert ei.calc_infill_value(x, surrogate, best_value=1.0) == 0.0
+    assert ei.calc_infill_value(x, surrogate, best_value=1.0) == pytest.approx(expected)
 
 
 @pytest.mark.unit

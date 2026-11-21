@@ -44,6 +44,7 @@ test = [
     "pytest-mpi",
     "mockmpi",
     "coverage",
+    "hypothesis",
 ]
 
 # Documentation requirements for building the documentation
@@ -153,7 +154,7 @@ pythonpath = ["tests/helpers"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-norecursedirs = ["tests/helpers"]
+norecursedirs = ["tests/helpers", ".hypothesis"]
 filterwarnings = [
     "error::DeprecationWarning:sbo",
     "error::FutureWarning:sbo",

@@ -256,20 +256,22 @@ class TwoStep(InfillBase[SurrogateBaseWithVariancePerFidelity]):
         surrogate: SurrogateBaseWithVariancePerFidelity,
         *args,
         **kwargs,
-    ) -> float:
+    ) -> float | np.ndarray:
         """Calculate the infill value for a point using the single-fidelity infill.
 
         Parameters
         ----------
         x
-            The input point where the infill value is to be calculated.
+            The points where the infill value is to be calculated.
+            One point with shape (n_dim,), or n points with shape (n, n_dim).
         surrogate
             The surrogate model used for predictions.
 
         Returns
         -------
-        float
-            The calculated infill value at the given point.
+        float | np.ndarray
+            The infill value per point: a float for one point, or an array with
+            shape (n,) for n points.
         """
         # Use the single-fidelity infill to calculate the infill value at the point
         return self.single_fid_infill.calc_infill_value(x, surrogate)

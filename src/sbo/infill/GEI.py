@@ -101,8 +101,10 @@ class GEI(InfillBase[SurrogateBaseWithVariance]):
             float
                 The negative infill value at x.
             """
-            return -self.calc_infill_value(
-                np.atleast_2d(x), surrogate, best_value=best_value
+            return -float(
+                self.calc_infill_value(
+                    np.atleast_2d(x), surrogate, best_value=best_value
+                )
             )
 
         sample_coord, infill_value = self._select_sample_point_optimisation(
@@ -120,16 +122,19 @@ class GEI(InfillBase[SurrogateBaseWithVariance]):
         best_value: float | None = None,
         fidelity: int = 0,
         **kwargs,
-    ) -> float:
+    ) -> float | np.ndarray:
         r"""Calculate the Generalised Expected Improvement (GEI) value at a given point.
 
-        The GEI is calculated with the formulas in the class docstring. If no point in
-        `x` has variance ($\hat{s}(x) \le 10^{-12}$), the GEI is 0.
+        The GEI is calculated with the formulas in the class docstring. A point without
+        variance ($\hat{s}(x) \le 10^{-12}$) gets the limit of the formula for
+        $\hat{s}(x) \to 0$: $\left(y_{\min} - \hat{y}(x)\right)^g$ if
+        $\hat{y}(x) < y_{\min}$, and 0 otherwise (for $g = 0$: 1 or 0).
 
         Parameters
         ----------
         x
-            The input point where the GEI is to be calculated.
+            The points where the GEI is to be calculated.
+            One point with shape (n_dim,), or n points with shape (n, n_dim).
         surrogate
             The surrogate model used to estimate the objective function.
         best_value
@@ -140,8 +145,9 @@ class GEI(InfillBase[SurrogateBaseWithVariance]):
 
         Returns
         -------
-        float
-            The calculated GEI value at the input point.
+        float | np.ndarray
+            The GEI per point: a float for one point, or an array with
+            shape (n,) for n points.
 
         Raises
         ------
@@ -167,10 +173,16 @@ class GEI(InfillBase[SurrogateBaseWithVariance]):
             )
         variance = np.maximum(variance, 0.0)
         sigma = np.sqrt(variance)
-        if np.all(np.abs(sigma) <= 1e-12):
-            return 0.0
 
-        u = (best_value - mu) / sigma
+        improvement = best_value - mu
+        has_variance = sigma > 1e-12
+        # Avoid dividing by zero; points without variance get u = 0 (overwritten)
+        u = np.divide(
+            improvement,
+            sigma,
+            out=np.zeros_like(improvement, dtype=float),
+            where=has_variance,
+        )
         t = [norm.cdf(u), -norm.pdf(u)]
         g = self.config.get("infill.g")
 
@@ -182,6 +194,9 @@ class GEI(InfillBase[SurrogateBaseWithVariance]):
         for k in range(g + 1):
             gei += (-1) ** k * comb(g, k) * (u ** (g - k)) * t[k]
         gei *= sigma**g
+        # Without variance the improvement is certain: I^g if there is an improvement
+        certain = np.where(improvement > 0.0, np.maximum(improvement, 0.0) ** g, 0.0)
+        gei[~has_variance] = certain[~has_variance]
 
         gei = gei.flatten()
         if len(gei) == 1:

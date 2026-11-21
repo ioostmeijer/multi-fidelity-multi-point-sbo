@@ -5,10 +5,10 @@ from `InfillBase` (`src/sbo/infill/Base.py`), and follow the [checklist](index.m
 
 ## Methods to Implement
 
-| Method                                                   | Returns                                  | Purpose                                                                                                      |
-| -------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `get_new_points(self, surrogate, *args, **kwargs)`       | `InfillResult`                           | The new tasks and the infill value; called by the optimisation algorithm via `infill(surrogate)`.            |
-| `calc_infill_value(self, x, surrogate, *args, **kwargs)` | `float` (or an array for several points) | The infill value at `x`; used for plotting. Raise `NotImplementedError` if there is none (as `Random` does). |
+| Method                                                   | Returns                                                                                | Purpose                                                                                                                |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `get_new_points(self, surrogate, *args, **kwargs)`       | `InfillResult`                                                                         | The new tasks and the infill value; called by the optimisation algorithm via `infill(surrogate)`.                      |
+| `calc_infill_value(self, x, surrogate, *args, **kwargs)` | `float \| np.ndarray` (a float for one point, an array with shape `(n,)` for n points) | The infill value per point in `x`; used for plotting. Raise `NotImplementedError` if there is none (as `Random` does). |
 
 `get_new_points` returns a list of **tasks**, each a list of points (`Point`: `{"coord": np.ndarray, "fid": int}`) that
 one worker evaluates together, and the **infill value** of the selection. The types are in
