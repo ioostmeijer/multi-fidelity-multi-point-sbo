@@ -24,6 +24,9 @@ All notable changes to this project are listed in this file. The format is based
 - `get_optimum` of the surrogates also returns the fidelity level (`fid`) of the optimum.
 - The README and the documentation mark `CoKRG` and `FilteredGEI` as planned for 1.4.0 and `CEI` for 1.5.0, instead of
     "not implemented" or "not functional".
+- `calc_infill_value` of `InfillBase` and the infill strategies is annotated as returning `float | np.ndarray` instead
+    of `float`, as it already did: a float for one point, an array with shape (n,) for n points. In 2.0.0 it will always
+    return an array (#65).
 
 ### Deprecated
 
@@ -36,6 +39,12 @@ All notable changes to this project are listed in this file. The format is based
     like `SBO.run()`. Results through `SBO` and `sbo()` don't change.
 - A surrogate loaded with `load_model` from data without an `"optimum"` entry no longer fails in `get_optimum`.
 - The surrogate plots of `SBO` no longer fail when the optimisation data has no `"init"` entry.
+- `EI.calc_infill_value` gives a point without variance its certain improvement $\max(y_{\min} - \hat{y}, 0)$, the limit
+    of the EI for $\hat{s} \to 0$, also when no point in `x` has variance. Before, it then returned a single `0.0`
+    instead of one value per point, so the EI of a point depended on the other points in `x`.
+- `GEI.calc_infill_value` no longer returns `nan` for a point without variance when other points in `x` have variance. A
+    point without variance gets the limit $\max(y_{\min} - \hat{y}, 0)^g$ (for $g = 0$: 1 if $\hat{y} < y_{\min}$, else
+    0), instead of 0 when no point in `x` has variance.
 
 ### Development
 
@@ -67,6 +76,9 @@ All notable changes to this project are listed in this file. The format is based
     its own environment. The workflows run these sessions, so the same commands run locally and in CI. nox is in the new
     `nox` dependency group: `uv run --only-group nox nox -s <session>`. This replaces the manual `.venv-*` environments
     for testing other Python versions.
+- Property-based tests with [Hypothesis](https://hypothesis.readthedocs.io/) (in the `test` group) for the benchmark
+    problems and `as_2d` (shape and finite values everywhere in the bounds) and for EI and GEI (not negative, bounds,
+    the limit without variance, the same value alone as in a batch).
 
 ## [1.1.0] - 2026-11-10
 
